@@ -33,7 +33,10 @@ function App() {
   }, []);
 
   const handleAddRepository = (repository: Repository) => {
-    const updatedRepositories = storageService.addRepository(repository);
+    const updatedRepositories = storageService.addRepository({
+      ...repository,
+      extractTicketNumber: true, // Default to true for new repositories
+    });
     setRepositories(updatedRepositories);
     setSuccess('Repository added successfully');
     handleFetchCommits();
@@ -43,6 +46,7 @@ function App() {
     const updatedRepositories = storageService.updateRepository(updatedRepo);
     setRepositories(updatedRepositories);
     setSuccess('Repository settings updated successfully');
+    handleFetchCommits(); // Refresh commits to update formatting
   };
 
   const handleDeleteRepository = (repositoryId: string) => {
@@ -56,7 +60,7 @@ function App() {
     
     try {
       for (const repository of repositories) {
-        const gitService = new GitService(repository.path);
+        const gitService = new GitService(repository);
         const isValid = await gitService.validateRepository();
         
         if (!isValid) {

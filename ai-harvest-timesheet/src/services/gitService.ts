@@ -1,15 +1,36 @@
 import simpleGit, { SimpleGit } from 'simple-git';
 import { startOfDay, endOfDay, format } from 'date-fns';
-import { CommitInfo } from '../types';
+import { CommitInfo, Repository } from '../types';
 import fs from 'fs';
 import path from 'path';
 
 export class GitService {
   private git: SimpleGit | null = null;
   private repoPath: string;
+  private extractTicketNumber: boolean;
 
-  constructor(repoPath: string) {
-    this.repoPath = repoPath;
+  constructor(repository: Repository) {
+    this.repoPath = repository.path;
+    this.extractTicketNumber = repository.extractTicketNumber;
+  }
+
+  private formatBranchName(branchName: string): { ticketNumber: string; branchTitle: string } {
+    if (!this.extractTicketNumber) {
+      return { ticketNumber: '', branchTitle: branchName };
+    }
+
+    // Extract ticket number and branch title
+    const match = branchName.match(/^(\d+)-(.+)$/);
+    if (match) {
+      const [, ticketNumber, branchTitle] = match;
+      // Convert branch title from kebab-case to readable format
+      const readableBranchTitle = branchTitle
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      return { ticketNumber, branchTitle: readableBranchTitle };
+    }
+    return { ticketNumber: '', branchTitle: branchName };
   }
 
   private async initGit(): Promise<SimpleGit> {
@@ -59,14 +80,16 @@ export class GitService {
       ]);
 
       const currentBranch = await this.getCurrentBranch();
+      const { ticketNumber, branchTitle } = this.formatBranchName(currentBranch);
 
       return logResult.all.map(commit => ({
         hash: commit.hash,
         date: commit.date,
         message: commit.message,
-        author_name: commit.author_name,
-        author_email: commit.author_email,
         branch: currentBranch,
+        formattedMessage: ticketNumber 
+          ? `${ticketNumber} | ${branchTitle} | ${commit.message}`
+          : `${branchTitle} | ${commit.message}`,
       }));
     } catch (error) {
       console.error('Error fetching commits:', error);

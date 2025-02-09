@@ -3,6 +3,7 @@ export interface Repository {
   path: string;
   harvestProjectId: string;
   harvestTaskId: string;
+  extractTicketNumber: boolean;
 }
 
 export interface HarvestProject {
@@ -32,4 +33,5 @@ export interface CommitInfo {
   message: string;
   date: string;
   branch: string;
-} 
+  formattedMessage: string;
+}

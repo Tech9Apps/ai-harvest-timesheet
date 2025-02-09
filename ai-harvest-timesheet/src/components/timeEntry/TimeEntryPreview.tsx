@@ -30,7 +30,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
         taskId: repository?.harvestTaskId || '',
         spentDate: format(new Date(commit.date), 'yyyy-MM-dd'),
         hours: hoursPerCommit,
-        notes: `${commit.branch} | ${commit.message}`,
+        notes: commit.formattedMessage,
       };
     });
   };
@@ -92,7 +92,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                           Branch: {commit.branch}
                         </Typography>
                         <Typography variant="body2">
-                          {commit.message}
+                          {commit.formattedMessage}
                         </Typography>
                       </Box>
                     }

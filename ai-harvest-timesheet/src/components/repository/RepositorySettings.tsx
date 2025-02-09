@@ -11,6 +11,8 @@ import {
   MenuItem,
   Typography,
   Box,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import { Repository, HarvestProject, HarvestTask } from '../../types';
 import { harvestApi } from '../../services/harvestApi';
@@ -33,6 +35,7 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
   const [tasksByProject, setTasksByProject] = useState<Record<string, HarvestTask[]>>({});
   const [selectedProjectId, setSelectedProjectId] = useState(repository.harvestProjectId);
   const [selectedTaskId, setSelectedTaskId] = useState(repository.harvestTaskId);
+  const [extractTicketNumber, setExtractTicketNumber] = useState(repository.extractTicketNumber ?? true);
   const { setLoading } = useLoading();
 
   useEffect(() => {
@@ -68,6 +71,7 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
       ...repository,
       harvestProjectId: selectedProjectId,
       harvestTaskId: selectedTaskId,
+      extractTicketNumber,
     });
     onClose();
   };
@@ -112,6 +116,23 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
             ))}
           </Select>
         </FormControl>
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={extractTicketNumber}
+              onChange={(e) => setExtractTicketNumber(e.target.checked)}
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body1">Extract Ticket Numbers</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Extract ticket numbers from branch names (e.g., "123-feature-name" → "123 | Feature Name | commit message")
+              </Typography>
+            </Box>
+          }
+        />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
