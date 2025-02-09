@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, List, ListItem, ListItemText, IconButton } from '@mui/material';
+import { Box, TextField, Button, List, ListItem, ListItemText, IconButton, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useLoading } from '../../context/LoadingContext';
@@ -59,6 +59,9 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
 
   return (
     <Box>
+      <Typography variant="h6" gutterBottom>
+        Repositories
+      </Typography>
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <TextField
           fullWidth
@@ -66,11 +69,25 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
           value={repoPath}
           onChange={(e) => setRepoPath(e.target.value)}
           placeholder="Enter repository path"
+          helperText={
+            <Box component="span" sx={{ display: 'block', '& > p': { m: 0 } }}>
+              <Typography variant="caption" paragraph>
+                Enter the full path to your Git repository:
+              </Typography>
+              <Typography variant="caption" color="primary" paragraph>
+                macOS/Linux: /Users/username/projects/my-repo
+              </Typography>
+              <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                After adding, click the ⚙️ settings icon to configure Harvest project and task.
+              </Typography>
+            </Box>
+          }
         />
         <Button
           variant="contained"
           onClick={handleAddRepository}
           disabled={!repoPath}
+          sx={{ height: 'fit-content', mt: 1 }}
         >
           Add Repository
         </Button>
