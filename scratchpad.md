@@ -32,10 +32,11 @@ The project requires building a desktop application that will:
         [x] Add single repository with validation
         [x] Store repository settings
         [x] Git repository validation logic
+        [x] Improve repository path input with helper text
     [x] Harvest API Integration
         [x] Token input UI
         [x] Secure token storage
-        [x] Project/Task fetching
+        [x] Project/Task fetching from user assignments
     [x] Git Integration
         [x] Commit history processing
         [x] Time calculation logic
@@ -91,6 +92,8 @@ The project requires building a desktop application that will:
    - Validate repositories before operations
    - Handle different branch name formats
    - Process commit history efficiently
+   - Use proper date formats for git log commands
+   - Check directory existence before initializing git
 
 6. UI/UX:
    - Implement proper form validation
@@ -99,6 +102,7 @@ The project requires building a desktop application that will:
    - Use consistent styling with Material UI theme
    - Use progress indicators for better user feedback
    - Disable interactive elements during loading
+   - Add helpful instructions and examples for user input
 
 7. Loading States:
    - Use a centralized loading context for managing multiple loading states
@@ -106,6 +110,12 @@ The project requires building a desktop application that will:
    - Disable relevant UI elements during loading
    - Provide visual feedback for long-running operations
    - Handle errors gracefully during loading states
+
+8. Data Persistence:
+   - Use namespaced keys for localStorage
+   - Implement proper error handling for storage operations
+   - Create dedicated service for data persistence
+   - Keep storage logic separate from UI components
 
 # Questions to Ask
 1. Should we implement user preferences for work hours (currently fixed at 8 hours)?
