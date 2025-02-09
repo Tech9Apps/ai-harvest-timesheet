@@ -6,6 +6,7 @@ import { TimeEntryPreview } from './components/timeEntry/TimeEntryPreview';
 import { Repository, TimeEntry, CommitInfo } from './types';
 import { GitService } from './services/gitService';
 import { harvestApi } from './services/harvestApi';
+import { storageService } from './services/storageService';
 import { LoadingProvider } from './context/LoadingContext';
 
 function App() {
@@ -15,11 +16,9 @@ function App() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load repositories from local storage
-    const savedRepositories = localStorage.getItem('repositories');
-    if (savedRepositories) {
-      setRepositories(JSON.parse(savedRepositories));
-    }
+    // Load repositories from storage
+    const savedRepositories = storageService.getRepositories();
+    setRepositories(savedRepositories);
 
     // Load Harvest credentials from environment variables
     const token = import.meta.env.VITE_HARVEST_ACCESS_TOKEN;
@@ -33,26 +32,22 @@ function App() {
     handleFetchCommits();
   }, []);
 
-  useEffect(() => {
-    // Save repositories to local storage
-    localStorage.setItem('repositories', JSON.stringify(repositories));
-  }, [repositories]);
-
   const handleAddRepository = (repository: Repository) => {
-    setRepositories([...repositories, repository]);
+    const updatedRepositories = storageService.addRepository(repository);
+    setRepositories(updatedRepositories);
     setSuccess('Repository added successfully');
     handleFetchCommits();
   };
 
   const handleUpdateRepository = (updatedRepo: Repository) => {
-    setRepositories(repositories.map(repo => 
-      repo.id === updatedRepo.id ? updatedRepo : repo
-    ));
+    const updatedRepositories = storageService.updateRepository(updatedRepo);
+    setRepositories(updatedRepositories);
     setSuccess('Repository settings updated successfully');
   };
 
   const handleDeleteRepository = (repositoryId: string) => {
-    setRepositories(repositories.filter(repo => repo.id !== repositoryId));
+    const updatedRepositories = storageService.deleteRepository(repositoryId);
+    setRepositories(updatedRepositories);
     setSuccess('Repository removed successfully');
   };
 
