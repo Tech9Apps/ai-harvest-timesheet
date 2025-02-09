@@ -1,0 +1,4 @@
+.DS_Store
+ai-harvest-timesheet/dist
+ai-harvest-timesheet/node_modules
+ai-harvest-timesheet/release
