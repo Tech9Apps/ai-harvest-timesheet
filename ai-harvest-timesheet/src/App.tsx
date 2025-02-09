@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Container, Box, Alert, Snackbar } from '@mui/material';
+import { Container, Box, Alert, Snackbar, Button } from '@mui/material';
 import MainLayout from './components/layout/MainLayout';
 import { RepositoryManager } from './components/repository/RepositoryManager';
 import { TimeEntryPreview } from './components/timeEntry/TimeEntryPreview';
+import { HarvestCredentialsDialog } from './components/harvest/HarvestCredentialsDialog';
 import { Repository, TimeEntry, CommitInfo } from './types';
 import { GitService } from './services/gitService';
 import { harvestApi } from './services/harvestApi';
@@ -15,18 +16,21 @@ function App() {
   const [commits, setCommits] = useState<{ [repoPath: string]: CommitInfo[] }>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
 
   useEffect(() => {
     // Load repositories from storage
     const savedRepositories = storageService.getRepositories();
     setRepositories(savedRepositories);
 
-    // Load Harvest credentials from environment variables
-    const token = import.meta.env.VITE_HARVEST_ACCESS_TOKEN;
-    const accountId = import.meta.env.VITE_HARVEST_ACCOUNT_ID;
+    // Load Harvest credentials from localStorage
+    const token = localStorage.getItem('harvest_access_token');
+    const accountId = localStorage.getItem('harvest_account_id');
 
     if (token && accountId) {
       harvestApi.setCredentials(token, accountId);
+    } else {
+      setShowCredentialsDialog(true);
     }
 
     // Initial fetch of commits
@@ -133,10 +137,33 @@ function App() {
     }
   };
 
+  const handleCredentialsDialogClose = () => {
+    // Only close the dialog if we have valid credentials
+    const token = localStorage.getItem('harvest_access_token');
+    const accountId = localStorage.getItem('harvest_account_id');
+    if (token && accountId) {
+      setShowCredentialsDialog(false);
+    }
+  };
+
+  const handleOpenCredentialsDialog = () => {
+    setShowCredentialsDialog(true);
+  };
+
   return (
     <LoadingProvider>
       <MainLayout>
         <Container maxWidth="lg">
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={handleOpenCredentialsDialog}
+              size="small"
+            >
+              Update Harvest Credentials
+            </Button>
+          </Box>
+
           <Box sx={{ my: 4 }}>
             <RepositoryManager
               repositories={repositories}
@@ -154,6 +181,11 @@ function App() {
               onRefresh={handleFetchCommits}
             />
           </Box>
+
+          <HarvestCredentialsDialog
+            open={showCredentialsDialog}
+            onClose={handleCredentialsDialogClose}
+          />
 
           <Snackbar
             open={!!error}

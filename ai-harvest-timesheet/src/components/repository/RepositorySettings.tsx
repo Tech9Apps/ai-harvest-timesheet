@@ -73,13 +73,13 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
   const availableTasks = selectedProjectId ? tasksByProject[selectedProjectId] || [] : [];
 
   const handleSave = () => {
-    onSave({
-      ...repository,
-      harvestProjectId: selectedProjectId,
-      harvestTaskId: selectedTaskId,
-      extractTicketNumber,
-      webhookUrl: webhookUrl || undefined,
-    });
+      onSave({
+        ...repository,
+        harvestProjectId: selectedProjectId,
+        harvestTaskId: selectedTaskId,
+        extractTicketNumber,
+        webhookUrl: webhookUrl || undefined,
+      });
     onClose();
   };
 
