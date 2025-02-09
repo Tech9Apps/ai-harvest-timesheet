@@ -103,6 +103,7 @@ function App() {
               return {
                 ...commit,
                 formattedMessage: webhookCommit?.formattedMessage || commit.formattedMessage,
+                hours: webhookCommit?.hours,
               };
             });
           } catch (error) {

@@ -35,6 +35,7 @@ export interface CommitInfo {
   date: string;
   branch: string;
   formattedMessage: string;
+  hours?: number;
 }
 
 export interface WebhookRequest {
@@ -55,5 +56,6 @@ export interface WebhookResponse {
     message: string;
     date: string;
     formattedMessage: string;
+    hours?: number;
   }[];
 }

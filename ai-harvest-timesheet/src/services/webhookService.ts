@@ -16,7 +16,16 @@ class WebhookService {
       }
 
       const data = await response.json();
-      return data as WebhookResponse;
+      return {
+        ...data,
+        commits: data.commits.map((commit: any) => ({
+          ...commit,
+          // If webhook doesn't provide formattedMessage, use original message
+          formattedMessage: commit.formattedMessage || commit.message,
+          // Keep hours if provided by webhook, otherwise undefined
+          hours: commit.hours,
+        })),
+      } as WebhookResponse;
     } catch (error) {
       console.error('Error calling webhook:', error);
       // If webhook fails, return original request with unformatted messages
@@ -26,6 +35,8 @@ class WebhookService {
         commits: request.commits.map(commit => ({
           ...commit,
           formattedMessage: commit.message,
+          // No custom hours in case of webhook failure
+          hours: undefined,
         })),
       };
     }

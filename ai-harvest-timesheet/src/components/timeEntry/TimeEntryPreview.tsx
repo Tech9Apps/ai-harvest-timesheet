@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Box, Typography, Paper, List, ListItem, ListItemText, Button } from '@mui/material';
 import { format } from 'date-fns';
 import { Repository, TimeEntry, CommitInfo } from '../../types';
+import { useLoading } from '../../context/LoadingContext';
 
 interface TimeEntryPreviewProps {
   commits: { [repoPath: string]: CommitInfo[] };
@@ -16,32 +17,73 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
   onSync,
   onRefresh,
 }) => {
-  const calculateTimeEntries = (): TimeEntry[] => {
-    const allCommits = Object.values(commits).flat();
-    const hoursPerCommit = 8 / allCommits.length;
+  const { setLoading } = useLoading();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [processedCommits, setProcessedCommits] = useState<{ [repoPath: string]: CommitInfo[] }>({});
 
-    return allCommits.map((commit) => {
-      const repository = repositories.find(repo => 
-        commits[repo.path]?.some(c => c.hash === commit.hash)
-      );
+  useEffect(() => {
+    // Process commits when they change
+    const newProcessedCommits: { [repoPath: string]: CommitInfo[] } = {};
+    
+    for (const [repoPath, repoCommits] of Object.entries(commits)) {
+      console.log(`Processing ${repoPath}:`, repoCommits);
+      const hasCustomHours = repoCommits.some(commit => {
+        console.log(`Commit ${commit.hash} hours:`, commit.hours);
+        return commit.hours !== undefined;
+      });
+      
+      if (hasCustomHours) {
+        console.log(`${repoPath} has custom hours, keeping original commits`);
+        newProcessedCommits[repoPath] = repoCommits;
+      } else {
+        console.log(`${repoPath} has no custom hours, calculating default distribution`);
+        const hoursPerCommit = 8 / repoCommits.length;
+        newProcessedCommits[repoPath] = repoCommits.map(commit => ({
+          ...commit,
+          hours: hoursPerCommit,
+        }));
+      }
+    }
+    
+    console.log('Final processed commits:', newProcessedCommits);
+    setProcessedCommits(newProcessedCommits);
+  }, [commits]);
 
-      return {
-        projectId: repository?.harvestProjectId || '',
-        taskId: repository?.harvestTaskId || '',
-        spentDate: format(new Date(commit.date), 'yyyy-MM-dd'),
-        hours: hoursPerCommit,
-        notes: commit.formattedMessage,
-      };
-    });
+  const handleSync = async () => {
+    if (Object.keys(processedCommits).length === 0) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+
+      const timeEntries: TimeEntry[] = [];
+      
+      for (const [repoPath, repoCommits] of Object.entries(processedCommits)) {
+        const repository = repositories.find(repo => repo.path === repoPath);
+        if (!repository) continue;
+        
+        const repoTimeEntries = repoCommits.map(commit => ({
+          projectId: repository.harvestProjectId,
+          taskId: repository.harvestTaskId,
+          spentDate: format(new Date(commit.date), 'yyyy-MM-dd'),
+          hours: commit.hours ?? 0,
+          notes: commit.formattedMessage,
+        }));
+
+        timeEntries.push(...repoTimeEntries);
+      }
+
+      await onSync(timeEntries);
+      setSuccess('Time entries successfully synced to Harvest!');
+    } catch (error) {
+      console.error('Error syncing time entries:', error);
+      setError('Failed to sync time entries to Harvest. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const handleSync = () => {
-    const timeEntries = calculateTimeEntries();
-    onSync(timeEntries);
-  };
-
-  const totalCommits = Object.values(commits).flat().length;
-  const hoursPerCommit = totalCommits ? (8 / totalCommits) : 0;
 
   return (
     <Box>
@@ -56,7 +98,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
           <Button
             variant="contained"
             onClick={handleSync}
-            disabled={totalCommits === 0}
+            disabled={Object.keys(processedCommits).length === 0}
           >
             Sync to Harvest
           </Button>
@@ -65,42 +107,56 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
 
       <Paper elevation={2}>
         <List>
-          {Object.entries(commits).map(([repoPath, repoCommits]) => (
-            <React.Fragment key={repoPath}>
-              <ListItem>
-                <ListItemText
-                  primary={repoPath.split('/').pop()}
-                  secondary={`${repoCommits.length} commits`}
-                />
-              </ListItem>
-              {repoCommits.map((commit) => (
-                <ListItem key={commit.hash} sx={{ pl: 4 }}>
+          {Object.entries(processedCommits).map(([repoPath, repoCommits]) => {
+            const hasCustomHours = repoCommits.some(commit => commit.hours !== undefined);
+            const totalHours = repoCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
+            
+            return (
+              <React.Fragment key={repoPath}>
+                <ListItem>
                   <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="subtitle2">
-                          {format(new Date(commit.date), 'MMM dd, yyyy HH:mm')}
-                        </Typography>
-                        <Typography variant="subtitle2">
-                          {hoursPerCommit.toFixed(2)} hours
-                        </Typography>
-                      </Box>
-                    }
+                    primary={repoPath.split('/').pop()}
                     secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          Branch: {commit.branch}
-                        </Typography>
-                        <Typography variant="body2">
-                          {commit.formattedMessage}
-                        </Typography>
-                      </Box>
+                      <Typography variant="body2">
+                        {repoCommits.length} commits{hasCustomHours ? ' (Custom hours)' : ''} - Total: {totalHours.toFixed(2)} hours
+                      </Typography>
                     }
                   />
                 </ListItem>
-              ))}
-            </React.Fragment>
-          ))}
+                {repoCommits.map((commit) => (
+                  <ListItem key={commit.hash} sx={{ pl: 4 }}>
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="subtitle2">
+                            {format(new Date(commit.date), 'MMM dd, yyyy HH:mm')}
+                          </Typography>
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ 
+                              color: commit.hours !== undefined ? 'primary.main' : 'inherit'
+                            }}
+                          >
+                            {(commit.hours ?? 0).toFixed(2)} hours
+                          </Typography>
+                        </Box>
+                      }
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Branch: {commit.branch}
+                          </Typography>
+                          <Typography variant="body2">
+                            {commit.formattedMessage}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </React.Fragment>
+            );
+          })}
         </List>
       </Paper>
     </Box>
