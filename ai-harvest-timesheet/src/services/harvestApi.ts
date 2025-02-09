@@ -31,7 +31,6 @@ class HarvestApi {
     return {
       'Authorization': `Bearer ${this.token}`,
       'Harvest-Account-ID': this.accountId,
-      'User-Agent': 'Harvest Time Tracker (suraj.adsul@example.com)',
       'Content-Type': 'application/json',
     };
   }
