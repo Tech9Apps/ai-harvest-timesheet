@@ -4,6 +4,7 @@ export interface Repository {
   harvestProjectId: string;
   harvestTaskId: string;
   extractTicketNumber: boolean;
+  webhookUrl?: string;
 }
 
 export interface HarvestProject {
@@ -34,4 +35,25 @@ export interface CommitInfo {
   date: string;
   branch: string;
   formattedMessage: string;
+}
+
+export interface WebhookRequest {
+  repositoryName: string;
+  branchName: string;
+  commits: {
+    hash: string;
+    message: string;
+    date: string;
+  }[];
+}
+
+export interface WebhookResponse {
+  repositoryName: string;
+  branchName: string;
+  commits: {
+    hash: string;
+    message: string;
+    date: string;
+    formattedMessage: string;
+  }[];
 }

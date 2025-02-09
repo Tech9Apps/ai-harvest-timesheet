@@ -1,14 +1,14 @@
 import simpleGit, { SimpleGit } from 'simple-git';
 import { startOfDay, endOfDay, format } from 'date-fns';
-import { CommitInfo, Repository } from '../types';
 import fs from 'fs';
 import path from 'path';
+import { CommitInfo, Repository } from '../types';
 
 export class GitService {
   private git: SimpleGit | null = null;
   private repoPath: string;
   private extractTicketNumber: boolean;
-
+  
   constructor(repository: Repository) {
     this.repoPath = repository.path;
     this.extractTicketNumber = repository.extractTicketNumber;

@@ -8,6 +8,7 @@ import { GitService } from './services/gitService';
 import { harvestApi } from './services/harvestApi';
 import { storageService } from './services/storageService';
 import { LoadingProvider } from './context/LoadingContext';
+import { webhookService } from './services/webhookService';
 
 function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -59,6 +60,7 @@ function App() {
     const newCommits: { [repoPath: string]: CommitInfo[] } = {};
     
     try {
+      // First, fetch all commits from repositories
       for (const repository of repositories) {
         const gitService = new GitService(repository);
         const isValid = await gitService.validateRepository();
@@ -71,6 +73,38 @@ function App() {
         const todayCommits = await gitService.getTodayCommits();
         if (todayCommits.length > 0) {
           newCommits[repository.path] = todayCommits;
+        }
+      }
+
+      // Then, process webhooks for repositories that have them configured
+      for (const repository of repositories) {
+        if (repository.webhookUrl && newCommits[repository.path]) {
+          const commits = newCommits[repository.path];
+          const webhookRequest = {
+            repositoryName: repository.path.split('/').pop() || '',
+            branchName: commits[0].branch,
+            commits: commits.map(({ hash, message, date }) => ({
+              hash,
+              message,
+              date,
+            })),
+          };
+
+          try {
+            const webhookResponse = await webhookService.formatMessages(repository.webhookUrl, webhookRequest);
+            
+            // Update commit messages with webhook response
+            newCommits[repository.path] = commits.map(commit => {
+              const webhookCommit = webhookResponse.commits.find(c => c.hash === commit.hash);
+              return {
+                ...commit,
+                formattedMessage: webhookCommit?.formattedMessage || commit.formattedMessage,
+              };
+            });
+          } catch (error) {
+            console.error(`Error processing webhook for repository ${repository.path}:`, error);
+            // Keep the original formatted messages if webhook fails
+          }
         }
       }
 

@@ -13,6 +13,7 @@ import {
   Box,
   FormControlLabel,
   Switch,
+  TextField,
 } from '@mui/material';
 import { Repository, HarvestProject, HarvestTask } from '../../types';
 import { harvestApi } from '../../services/harvestApi';
@@ -36,6 +37,7 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
   const [selectedProjectId, setSelectedProjectId] = useState(repository.harvestProjectId);
   const [selectedTaskId, setSelectedTaskId] = useState(repository.harvestTaskId);
   const [extractTicketNumber, setExtractTicketNumber] = useState(repository.extractTicketNumber ?? true);
+  const [webhookUrl, setWebhookUrl] = useState(repository.webhookUrl || '');
   const { setLoading } = useLoading();
 
   useEffect(() => {
@@ -72,6 +74,7 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
       harvestProjectId: selectedProjectId,
       harvestTaskId: selectedTaskId,
       extractTicketNumber,
+      webhookUrl: webhookUrl || undefined,
     });
     onClose();
   };
@@ -131,6 +134,20 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
                 Extract ticket numbers from branch names (e.g., "123-feature-name" → "123 | Feature Name | commit message")
               </Typography>
             </Box>
+          }
+          sx={{ mb: 2 }}
+        />
+
+        <TextField
+          fullWidth
+          label="Custom Webhook URL (Optional)"
+          value={webhookUrl}
+          onChange={(e) => setWebhookUrl(e.target.value)}
+          placeholder="https://your-webhook-url.com/format"
+          helperText={
+            <Typography variant="caption" color="text.secondary">
+              Provide a webhook URL to customize commit message formatting. The webhook will receive repository details and commit information, and should return formatted messages.
+            </Typography>
           }
         />
       </DialogContent>
