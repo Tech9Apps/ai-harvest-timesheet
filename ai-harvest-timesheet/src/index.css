@@ -1,0 +1,22 @@
+/* Reset default styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Ensure the root element takes full height */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Remove default focus outline and add custom one */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid #90caf9;
+  outline-offset: 2px;
+} 

@@ -1,0 +1,50 @@
+{
+  "name": "ai-harvest-timesheet",
+  "version": "0.0.0",
+  "type": "commonjs",
+  "main": "dist-electron/main.js",
+  "description": "Harvest Time Tracking via Git Commit History",
+  "author": "Your Name",
+  "license": "MIT",
+  "private": true,
+  "debug": {
+    "env": {
+      "VITE_DEV_SERVER_URL": "http://127.0.0.1:5173"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "preview": "vite preview",
+    "pree2e": "vite build --mode=test",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^5.16.14",
+    "@mui/material": "^5.16.14",
+    "@types/uuid": "^10.0.0",
+    "axios": "^1.7.9",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.7",
+    "lowdb": "^7.0.1",
+    "simple-git": "^3.27.0",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.37.1",
+    "@types/node": "^20.11.19",
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react": "^4.0.4",
+    "electron": "^27.1.0",
+    "electron-builder": "^24.6.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.10",
+    "vite-plugin-electron": "^0.15.5",
+    "vite-plugin-electron-renderer": "^0.14.5"
+  }
+}
