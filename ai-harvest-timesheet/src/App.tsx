@@ -60,7 +60,7 @@ function App() {
     setSuccess('Repository removed successfully');
   };
 
-  const handleFetchCommits = async () => {
+  const handleFetchCommits = async (startDate?: Date, endDate?: Date) => {
     const newCommits: { [repoPath: string]: CommitInfo[] } = {};
     
     try {
@@ -74,9 +74,15 @@ function App() {
           continue;
         }
 
-        const todayCommits = await gitService.getTodayCommits();
-        if (todayCommits.length > 0) {
-          newCommits[repository.path] = todayCommits;
+        let commits;
+        if (startDate && endDate) {
+          commits = await gitService.getCommits(startDate, endDate);
+        } else {
+          commits = await gitService.getTodayCommits();
+        }
+
+        if (commits.length > 0) {
+          newCommits[repository.path] = commits;
         }
       }
 
@@ -115,7 +121,7 @@ function App() {
 
       setCommits(newCommits);
       if (Object.keys(newCommits).length === 0) {
-        setSuccess('No commits found for today');
+        setSuccess('No commits found for the selected period');
       } else {
         setSuccess('Commits fetched successfully');
       }

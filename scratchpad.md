@@ -40,6 +40,8 @@ The project requires building a desktop application that will:
     [x] Git Integration
         [x] Commit history processing
         [x] Time calculation logic
+        [x] Custom date range selection
+        [x] Flexible commit filtering
     [x] Time Entry Creation
         [x] Preview interface
         [x] Sync functionality
@@ -51,6 +53,9 @@ The project requires building a desktop application that will:
     [x] Token input and management UI
     [x] Project/Task selection UI
     [x] Time entry preview UI
+        [x] Date range selector component
+        [x] Today/Custom range toggle
+        [x] Date validation and constraints
     [x] Sync button and status
     [x] Error messages and notifications
     [x] Loading states and progress indicators
@@ -117,8 +122,27 @@ The project requires building a desktop application that will:
    - Create dedicated service for data persistence
    - Keep storage logic separate from UI components
 
+9. Date Handling:
+   - Use date-fns for consistent date manipulation
+   - Always consider timezone implications
+   - Use startOfDay and endOfDay for accurate date ranges
+   - Implement proper date validation and constraints
+   - Provide intuitive date selection UI
+   - Keep default behavior (today) easily accessible
+   - Handle date range changes efficiently
+
+10. Component Organization:
+    - Create reusable components for common patterns
+    - Keep state management close to where it's needed
+    - Use proper prop types for component interfaces
+    - Implement clear component boundaries
+    - Handle loading and error states consistently
+    - Provide meaningful default values
+
 # Questions to Ask
 1. Should we implement user preferences for work hours (currently fixed at 8 hours)?
 2. How should we handle commits that span multiple days?
 3. Should we implement a preview feature before syncing time entries?
 4. What should be the minimum Git commit information required for a valid time entry?
+5. Should we add more date range presets (e.g., This Week, Last Week)?
+6. How should we handle timezone differences between Git commits and Harvest entries?

@@ -3,12 +3,13 @@ import { Box, Typography, Paper, List, ListItem, ListItemText, Button } from '@m
 import { format } from 'date-fns';
 import { Repository, TimeEntry, CommitInfo } from '../../types';
 import { useLoading } from '../../context/LoadingContext';
+import { DateRangeSelector } from './DateRangeSelector';
 
 interface TimeEntryPreviewProps {
   commits: { [repoPath: string]: CommitInfo[] };
   repositories: Repository[];
   onSync: (timeEntries: TimeEntry[]) => Promise<void>;
-  onRefresh: () => Promise<void>;
+  onRefresh: (startDate?: Date, endDate?: Date) => Promise<void>;
 }
 
 export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
@@ -21,6 +22,9 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [processedCommits, setProcessedCommits] = useState<{ [repoPath: string]: CommitInfo[] }>({});
+  const [rangeType, setRangeType] = useState<'today' | 'custom'>('today');
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
 
   useEffect(() => {
     // Process commits when they change
@@ -85,6 +89,16 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     }
   };
 
+  const handleDateRangeChange = (newStartDate: Date, newEndDate: Date) => {
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+    onRefresh(newStartDate, newEndDate);
+  };
+
+  const handleRangeTypeChange = (newRangeType: 'today' | 'custom') => {
+    setRangeType(newRangeType);
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -92,7 +106,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
           Time Entries Preview
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="outlined" onClick={onRefresh}>
+          <Button variant="outlined" onClick={() => onRefresh(startDate, endDate)}>
             Refresh
           </Button>
           <Button
@@ -104,6 +118,14 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
           </Button>
         </Box>
       </Box>
+
+      <DateRangeSelector
+        startDate={startDate}
+        endDate={endDate}
+        onDateRangeChange={handleDateRangeChange}
+        onRangeTypeChange={handleRangeTypeChange}
+        rangeType={rangeType}
+      />
 
       <Paper elevation={2}>
         <List>

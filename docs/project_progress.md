@@ -34,6 +34,8 @@
   - [x] Branch information handling
   - [x] User-specific commit filtering
   - [x] Current branch only commits
+  - [x] Custom date range selection
+  - [x] Flexible commit date filtering
 - [x] Time Entry Creation
   - [x] Preview interface
   - [x] Sync functionality
@@ -54,9 +56,15 @@
   - [x] Custom hours highlighting
   - [x] Total hours display
   - [x] Commit details formatting
+  - [x] Date range selector
+  - [x] Today/Custom range toggle
 - [x] Sync button and status
 - [x] Error messages and notifications
 - [x] Loading states and progress indicators
+- [x] Application branding
+  - [x] Custom app name
+  - [x] App icon configuration
+  - [ ] Custom app icons
 
 ### Phase 4: Data Persistence (Completed)
 - [x] Local storage implementation
@@ -80,6 +88,9 @@
 - [x] Code Documentation
 
 ## Recent Updates
+- Added date range selection for commit fetching
+- Added Today/Custom range toggle for flexible time periods
+- Added validation for date range selection
 - Fixed Harvest credentials dialog to properly handle existing credentials
 - Added validation for credentials dialog closing
 - Improved credentials persistence and error handling

@@ -1,5 +1,18 @@
 # Installation Guide
 
+## Introduction
+
+Harvest Timesheet is a desktop application that automates time tracking in Harvest based on your Git commit history. Key features include:
+
+- Automatically creates time entries in Harvest from your Git commits
+- Distributes work hours across your daily commits
+- Supports custom time allocation through webhooks
+- Extracts ticket numbers from branch names for better organization
+- Works with multiple repositories and Harvest projects
+- Preserves your commit messages as time entry descriptions
+
+This tool is perfect for developers who want to maintain accurate time records without the interruption of manual time entry.
+
 ## macOS Installation
 
 When installing the Harvest Timesheet on macOS, you might encounter security warnings because the application is not signed with an Apple developer certificate. Here's how to safely install and run the application:
