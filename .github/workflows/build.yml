@@ -12,12 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        node-version: [18.x]
+    runs-on: macos-latest
 
     steps:
       - name: Checkout code
@@ -26,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 18.x
           cache: 'npm'
 
       - name: Install dependencies
@@ -37,16 +32,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Linux dependencies
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
-
       # Build and release executables
       - name: Build and release
-        run: npm run electron:build
+        run: npm run build:mac
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -54,12 +42,11 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-build
+          name: macos-build
           path: |
             release/**/*.dmg
-            release/**/*.exe
-            release/**/*.AppImage
-          if-no-files-found: ignore
+            release/**/*.zip
+          if-no-files-found: error
 
   release:
     needs: build
@@ -75,8 +62,7 @@ jobs:
         with:
           files: |
             **/release/**/*.dmg
-            **/release/**/*.exe
-            **/release/**/*.AppImage
+            **/release/**/*.zip
           draft: true
           prerelease: false
           generate_release_notes: true

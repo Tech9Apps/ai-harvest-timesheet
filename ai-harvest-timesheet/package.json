@@ -8,10 +8,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "electron:build": "npm run build && electron-builder",
+    "electron:build": "npm run build:mac",
     "build:mac": "vite build && electron-builder --mac --config.mac.identity=null",
-    "build:win": "vite build && electron-builder --win",
-    "build:linux": "vite build && electron-builder --linux",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit"
@@ -36,19 +34,6 @@
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist"
-    },
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ]
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Utility"
     },
     "dmg": {
       "contents": [
