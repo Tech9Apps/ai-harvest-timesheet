@@ -64,6 +64,22 @@ export class GitService {
     return this.getCommits(startOfDay(today), endOfDay(today));
   }
 
+  private async getCurrentUser(): Promise<string> {
+    try {
+      const git = await this.initGit();
+      const config = await git.listConfig();
+      const email = config.all['user.email'];
+      const name = config.all['user.name'];
+      // Handle both string and array cases
+      const userEmail = Array.isArray(email) ? email[0] : email;
+      const userName = Array.isArray(name) ? name[0] : name;
+      return userEmail ? userEmail : (userName || '');
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return '';
+    }
+  }
+
   async getCommits(since: Date, until: Date): Promise<CommitInfo[]> {
     try {
       const git = await this.initGit();
@@ -72,6 +88,12 @@ export class GitService {
       const currentBranch = await this.getCurrentBranch();
       if (currentBranch === 'unknown') {
         throw new Error('Could not determine current branch');
+      }
+
+      // Get current user's email or name
+      const currentUser = await this.getCurrentUser();
+      if (!currentUser) {
+        throw new Error('Could not determine current user');
       }
 
       // Format dates for git log command using ISO format
@@ -83,6 +105,7 @@ export class GitService {
         '--before', `${beforeDate} 23:59:59`,
         currentBranch,  // Only get commits from current branch
         '--no-merges',  // Exclude merge commits
+        '--author', currentUser,  // Only get commits from current user
       ]);
 
       const { ticketNumber, branchTitle } = this.formatBranchName(currentBranch);
@@ -137,4 +160,4 @@ export class GitService {
   getRepoPath(): string {
     return this.repoPath;
   }
-} 
+}
