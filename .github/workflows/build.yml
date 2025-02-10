@@ -46,6 +46,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # List build output
+      - name: List build output
+        run: |
+          echo "Build output contents:"
+          ls -la release/
+          echo "DMG files:"
+          find release -name "*.dmg"
+          echo "ZIP files:"
+          find release -name "*.zip"
+
       # Upload artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -71,8 +81,10 @@ jobs:
       - name: List files
         run: |
           pwd
-          ls -R
-        working-directory: release
+          echo "Release directory contents:"
+          ls -R release/
+          echo "Found files:"
+          find release -type f
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

@@ -13,7 +13,7 @@
     "dev": "vite",
     "build": "vite build",
     "electron:build": "npm run build:mac",
-    "build:mac": "vite build && electron-builder --mac --config.mac.identity=null",
+    "build:mac": "vite build && electron-builder --mac --universal --config.mac.identity=null",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit"
@@ -31,10 +31,13 @@
     "publish": null,
     "mac": {
       "category": "public.app-category.productivity",
-      "target": [
-        "dmg",
-        "zip"
-      ],
+      "target": {
+        "target": "default",
+        "arch": [
+          "arm64",
+          "x64"
+        ]
+      },
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
