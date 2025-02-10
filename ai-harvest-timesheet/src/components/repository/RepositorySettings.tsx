@@ -91,7 +91,8 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
         {
           hash: "abc123",
           message: "Add new feature",
-          date: "2024-03-14T10:30:00Z"
+          date: "2024-03-14T10:30:00Z",
+          hours: 2.5
         }
       ]
     },
@@ -103,7 +104,8 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
           hash: "abc123",
           message: "Add new feature",
           date: "2024-03-14T10:30:00Z",
-          formattedMessage: "PROJ-123 | Feature Branch | Add new feature"
+          formattedMessage: "PROJ-123 | Feature Branch | Add new feature",
+          hours: 2.5
         }
       ]
     }
