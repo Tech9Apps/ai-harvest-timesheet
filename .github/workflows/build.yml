@@ -14,6 +14,10 @@ jobs:
   build:
     runs-on: macos-latest
 
+    defaults:
+      run:
+        working-directory: ai-harvest-timesheet
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,9 +27,12 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
+          cache-dependency-path: ai-harvest-timesheet/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm install -g npm@latest
+          npm ci
 
       - name: Build application
         run: npm run build
@@ -44,8 +51,8 @@ jobs:
         with:
           name: macos-build
           path: |
-            release/**/*.dmg
-            release/**/*.zip
+            ai-harvest-timesheet/release/**/*.dmg
+            ai-harvest-timesheet/release/**/*.zip
           if-no-files-found: error
 
   release:
