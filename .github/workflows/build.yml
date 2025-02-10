@@ -25,14 +25,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.11.1
+          node-version: 20.17.0
           cache: 'npm'
           cache-dependency-path: ai-harvest-timesheet/package-lock.json
 
       - name: Install dependencies
         run: |
-          npm install -g npm@latest
-          npm ci
+          npm install
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Build application
         run: npm run build
