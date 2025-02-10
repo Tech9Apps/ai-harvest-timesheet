@@ -3,8 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "description": "Automate time logging in Harvest based on Git commit history",
-  "author": "Your Name",
+  "author": "Suraj Adsul",
   "main": "dist-electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/surajadsul/ai-harvest-timesheet.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -24,6 +28,7 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
+    "publish": null,
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
