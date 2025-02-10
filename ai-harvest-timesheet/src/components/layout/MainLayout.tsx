@@ -15,7 +15,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         <AppBar position="static">
           <Toolbar>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Harvest Time Tracker
+              Harvest Timesheet
             </Typography>
           </Toolbar>
         </AppBar>

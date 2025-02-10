@@ -2,15 +2,15 @@
 
 ## macOS Installation
 
-When installing the Harvest Time Tracker on macOS, you might encounter security warnings because the application is not signed with an Apple developer certificate. Here's how to safely install and run the application:
+When installing the Harvest Timesheet on macOS, you might encounter security warnings because the application is not signed with an Apple developer certificate. Here's how to safely install and run the application:
 
 ### First-time Installation
 
-1. Download the latest version of Harvest Time Tracker (`.dmg` file)
+1. Download the latest version of Harvest Timesheet (`.dmg` file)
 2. Double-click the `.dmg` file to mount it
 3. Drag the application to your Applications folder
 4. When you first try to open the application, you may see a security warning:
-   > "Harvest Time Tracker" cannot be opened because the developer cannot be verified.
+   > "Harvest Timesheet" cannot be opened because the developer cannot be verified.
 
 ### Bypassing the Security Warning
 
@@ -20,7 +20,7 @@ There are two ways to run the application:
 1. Click the Apple menu (🍎) and select "System Settings"
 2. Go to "Privacy & Security"
 3. Scroll down to the "Security" section
-4. Look for the message about Harvest Time Tracker being blocked
+4. Look for the message about Harvest Timesheet being blocked
 5. Click "Open Anyway"
 6. In the confirmation dialog, click "Open"
 
