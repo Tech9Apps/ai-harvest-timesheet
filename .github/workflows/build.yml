@@ -64,13 +64,22 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        with:
+          name: macos-build
+          path: release
+
+      - name: List files
+        run: |
+          pwd
+          ls -R
+        working-directory: release
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            **/release/**/*.dmg
-            **/release/**/*.zip
+            release/**/*.dmg
+            release/**/*.zip
           draft: true
           prerelease: false
           generate_release_notes: true
