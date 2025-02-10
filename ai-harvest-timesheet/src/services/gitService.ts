@@ -68,6 +68,12 @@ export class GitService {
     try {
       const git = await this.initGit();
 
+      // Get current branch first
+      const currentBranch = await this.getCurrentBranch();
+      if (currentBranch === 'unknown') {
+        throw new Error('Could not determine current branch');
+      }
+
       // Format dates for git log command using ISO format
       const afterDate = format(since, 'yyyy-MM-dd');
       const beforeDate = format(until, 'yyyy-MM-dd');
@@ -75,11 +81,10 @@ export class GitService {
       const logResult = await git.log([
         '--after', `${afterDate} 00:00:00`,
         '--before', `${beforeDate} 23:59:59`,
-        '--all',  // Include all branches
+        currentBranch,  // Only get commits from current branch
         '--no-merges',  // Exclude merge commits
       ]);
 
-      const currentBranch = await this.getCurrentBranch();
       const { ticketNumber, branchTitle } = this.formatBranchName(currentBranch);
 
       return logResult.all.map(commit => ({
