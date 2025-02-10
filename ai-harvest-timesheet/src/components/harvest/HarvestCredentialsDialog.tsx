@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -27,6 +27,17 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
   const [error, setError] = useState<string | null>(null);
   const { setLoading } = useLoading();
 
+  useEffect(() => {
+    if (open) {
+      // Load existing credentials when dialog opens
+      const savedToken = localStorage.getItem('harvest_access_token') || '';
+      const savedAccountId = localStorage.getItem('harvest_account_id') || '';
+      setAccessToken(savedToken);
+      setAccountId(savedAccountId);
+      setError(null);
+    }
+  }, [open]);
+
   const handleSave = async () => {
     if (!accessToken || !accountId) {
       setError('Please fill in both fields');
@@ -50,6 +61,18 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
       setError('Invalid credentials. Please check your access token and account ID.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Only allow closing if we have valid credentials stored
+    const savedToken = localStorage.getItem('harvest_access_token');
+    const savedAccountId = localStorage.getItem('harvest_account_id');
+    
+    if (savedToken && savedAccountId) {
+      onClose();
+    } else {
+      setError('Please provide valid credentials before closing');
     }
   };
 
@@ -102,6 +125,9 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
         )}
       </DialogContent>
       <DialogActions>
+        <Button onClick={handleCancel}>
+          Cancel
+        </Button>
         <Button onClick={handleSave} variant="contained">
           Save Credentials
         </Button>
