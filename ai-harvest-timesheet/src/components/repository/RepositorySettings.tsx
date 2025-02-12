@@ -16,11 +16,13 @@ import {
   TextField,
   IconButton,
   Paper,
+  Divider,
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { Repository, HarvestProject, HarvestTask } from '../../types';
 import { harvestApi } from '../../services/harvestApi';
 import { useLoading } from '../../context/LoadingContext';
+import { usePreferences } from '../../context/PreferencesContext';
 
 interface RepositorySettingsProps {
   open: boolean;
@@ -39,10 +41,12 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
   const [tasksByProject, setTasksByProject] = useState<Record<string, HarvestTask[]>>({});
   const [selectedProjectId, setSelectedProjectId] = useState(repository.harvestProjectId);
   const [selectedTaskId, setSelectedTaskId] = useState(repository.harvestTaskId);
-  const [extractTicketNumber, setExtractTicketNumber] = useState(repository.extractTicketNumber ?? true);
+  const [extractTicketNumber] = useState(repository.extractTicketNumber ?? true);
   const [webhookUrl, setWebhookUrl] = useState(repository.webhookUrl || '');
   const [showWebhookHelp, setShowWebhookHelp] = useState(false);
   const { setLoading } = useLoading();
+  const { getRepositoryPreferences, updateRepositoryPreferences, globalPreferences } = usePreferences();
+  const repositoryPreferences = getRepositoryPreferences(repository.id);
 
   useEffect(() => {
     if (open) {
@@ -111,6 +115,24 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
     }
   };
 
+  const handleUseGlobalSettingsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateRepositoryPreferences(repository.id, {
+      useGlobalSettings: event.target.checked,
+    });
+  };
+
+  const handleEnforce8HoursChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateRepositoryPreferences(repository.id, {
+      enforce8Hours: event.target.checked,
+    });
+  };
+
+  const handleAutoRedistributeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateRepositoryPreferences(repository.id, {
+      autoRedistributeHours: event.target.checked,
+    });
+  };
+
   return (
     <>
       <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -137,7 +159,7 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
             </Select>
           </FormControl>
 
-          <FormControl fullWidth sx={{ mb: 2 }}>
+          <FormControl fullWidth sx={{ mb: 3 }}>
             <InputLabel>Task</InputLabel>
             <Select
               value={selectedTaskId}
@@ -153,23 +175,89 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
             </Select>
           </FormControl>
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={extractTicketNumber}
-                onChange={(e) => setExtractTicketNumber(e.target.checked)}
-              />
-            }
-            label={
-              <Box>
-                <Typography variant="body1">Extract Ticket Numbers</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Extract ticket numbers from branch names (e.g., "123-feature-name" → "123 | Feature Name | commit message")
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="subtitle1" gutterBottom>
+            Time Preferences
+          </Typography>
+
+          <Box sx={{ mb: 3 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={repositoryPreferences.useGlobalSettings}
+                  onChange={handleUseGlobalSettingsChange}
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body1">Use Global Settings</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Use the global time preferences for this repository
+                  </Typography>
+                </Box>
+              }
+            />
+          </Box>
+
+          {!repositoryPreferences.useGlobalSettings && (
+            <>
+              <Box sx={{ mb: 3, ml: 3 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={repositoryPreferences.enforce8Hours}
+                      onChange={handleEnforce8HoursChange}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body1">Enforce 8-Hour Day</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Automatically adjust commit hours to total 8 hours per day
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </Box>
+
+              <Box sx={{ mb: 3, ml: 3 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={repositoryPreferences.autoRedistributeHours}
+                      onChange={handleAutoRedistributeChange}
+                      disabled={!repositoryPreferences.enforce8Hours}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body1">Automatic Hour Redistribution</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        When manually adjusting hours, automatically redistribute remaining hours
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </Box>
+            </>
+          )}
+
+          {repositoryPreferences.useGlobalSettings && (
+            <Box sx={{ ml: 3, mb: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Using global settings:
+              </Typography>
+              <Box sx={{ ml: 2, mt: 1 }}>
+                <Typography variant="body2">
+                  • Enforce 8-Hour Day: {globalPreferences.enforce8Hours ? 'Yes' : 'No'}
+                </Typography>
+                <Typography variant="body2">
+                  • Automatic Hour Redistribution: {globalPreferences.autoRedistributeHours ? 'Yes' : 'No'}
                 </Typography>
               </Box>
-            }
-            sx={{ mb: 2 }}
-          />
+            </Box>
+          )}
 
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2 }}>
             <TextField

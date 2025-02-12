@@ -23,7 +23,13 @@
     
     /* Allow JavaScript files */
     "allowJs": true,
-    "declaration": false
+    "declaration": false,
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": [
     "src/**/*",

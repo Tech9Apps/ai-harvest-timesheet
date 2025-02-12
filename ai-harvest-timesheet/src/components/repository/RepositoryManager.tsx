@@ -33,6 +33,7 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
         path: repoPath,
         harvestProjectId: '',
         harvestTaskId: '',
+        extractTicketNumber: true,
       };
 
       onRepositoryAdd(newRepo);

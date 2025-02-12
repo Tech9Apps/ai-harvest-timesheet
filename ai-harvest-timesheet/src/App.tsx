@@ -10,6 +10,8 @@ import { harvestApi } from './services/harvestApi';
 import { storageService } from './services/storageService';
 import { LoadingProvider } from './context/LoadingContext';
 import { webhookService } from './services/webhookService';
+import { PreferencesProvider } from './context/PreferencesContext';
+import { GlobalPreferencesDialog } from './components/preferences/GlobalPreferencesDialog';
 
 function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -17,6 +19,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
+  const [showGlobalPreferences, setShowGlobalPreferences] = useState(false);
 
   useEffect(() => {
     // Load repositories from storage
@@ -158,64 +161,78 @@ function App() {
   };
 
   return (
-    <LoadingProvider>
-      <MainLayout>
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={handleOpenCredentialsDialog}
-              size="small"
+    <PreferencesProvider>
+      <LoadingProvider>
+        <MainLayout>
+          <Container maxWidth="lg">
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => setShowGlobalPreferences(true)}
+                size="small"
+              >
+                Time Preferences
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleOpenCredentialsDialog}
+                size="small"
+              >
+                Update Harvest Credentials
+              </Button>
+            </Box>
+
+            <Box sx={{ my: 4 }}>
+              <RepositoryManager
+                repositories={repositories}
+                onRepositoryAdd={handleAddRepository}
+                onRepositoryUpdate={handleUpdateRepository}
+                onRepositoryDelete={handleDeleteRepository}
+              />
+            </Box>
+            
+            <Box sx={{ my: 4 }}>
+              <TimeEntryPreview
+                commits={commits}
+                repositories={repositories}
+                onSync={handleSync}
+                onRefresh={handleFetchCommits}
+              />
+            </Box>
+
+            <HarvestCredentialsDialog
+              open={showCredentialsDialog}
+              onClose={handleCredentialsDialogClose}
+            />
+
+            <GlobalPreferencesDialog
+              open={showGlobalPreferences}
+              onClose={() => setShowGlobalPreferences(false)}
+            />
+
+            <Snackbar
+              open={!!error}
+              autoHideDuration={6000}
+              onClose={() => setError(null)}
             >
-              Update Harvest Credentials
-            </Button>
-          </Box>
+              <Alert severity="error" onClose={() => setError(null)}>
+                {error}
+              </Alert>
+            </Snackbar>
 
-          <Box sx={{ my: 4 }}>
-            <RepositoryManager
-              repositories={repositories}
-              onRepositoryAdd={handleAddRepository}
-              onRepositoryUpdate={handleUpdateRepository}
-              onRepositoryDelete={handleDeleteRepository}
-            />
-          </Box>
-          
-          <Box sx={{ my: 4 }}>
-            <TimeEntryPreview
-              commits={commits}
-              repositories={repositories}
-              onSync={handleSync}
-              onRefresh={handleFetchCommits}
-            />
-          </Box>
-
-          <HarvestCredentialsDialog
-            open={showCredentialsDialog}
-            onClose={handleCredentialsDialogClose}
-          />
-
-          <Snackbar
-            open={!!error}
-            autoHideDuration={6000}
-            onClose={() => setError(null)}
-          >
-            <Alert severity="error" onClose={() => setError(null)}>
-              {error}
-            </Alert>
-          </Snackbar>
-
-          <Snackbar
-            open={!!success}
-            autoHideDuration={6000}
-            onClose={() => setSuccess(null)}
-          >
-            <Alert severity="success" onClose={() => setSuccess(null)}>
-              {success}
-            </Alert>
-          </Snackbar>
-        </Container>
-      </MainLayout>
-    </LoadingProvider>
+            <Snackbar
+              open={!!success}
+              autoHideDuration={6000}
+              onClose={() => setSuccess(null)}
+            >
+              <Alert severity="success" onClose={() => setSuccess(null)}>
+                {success}
+              </Alert>
+            </Snackbar>
+          </Container>
+        </MainLayout>
+      </LoadingProvider>
+    </PreferencesProvider>
   );
 }
 
