@@ -32,6 +32,10 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
     updateGlobalPreferences({ autoRedistributeHours: event.target.checked });
   };
 
+  const handleDistributeAcrossReposChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateGlobalPreferences({ distributeAcrossRepositories: event.target.checked });
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Global Time Preferences</DialogTitle>
@@ -65,7 +69,7 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
 
           <Divider sx={{ my: 2 }} />
 
-          <Box>
+          <Box sx={{ mb: 3 }}>
             <FormControlLabel
               control={
                 <Switch
@@ -79,6 +83,28 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
                   <Typography variant="body1">Automatic Hour Redistribution</Typography>
                   <Typography variant="caption" color="text.secondary">
                     When manually adjusting hours, automatically redistribute remaining hours across other commits
+                  </Typography>
+                </Box>
+              }
+            />
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={globalPreferences.distributeAcrossRepositories}
+                  onChange={handleDistributeAcrossReposChange}
+                  disabled={!globalPreferences.enforce8Hours}
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body1">Cross-Repository Distribution</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Distribute 8 hours across all repositories for the day instead of per repository
                   </Typography>
                 </Box>
               }

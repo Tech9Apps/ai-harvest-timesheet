@@ -1,6 +1,7 @@
 export interface TimePreferences {
   enforce8Hours: boolean;
   autoRedistributeHours: boolean;
+  distributeAcrossRepositories: boolean;
 }
 
 export interface RepositoryPreferences extends TimePreferences {

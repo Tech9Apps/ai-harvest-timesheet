@@ -240,6 +240,28 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
                   }
                 />
               </Box>
+
+              <Box sx={{ mb: 3, ml: 3 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={repositoryPreferences.distributeAcrossRepositories}
+                      onChange={(event) => updateRepositoryPreferences(repository.id, {
+                        distributeAcrossRepositories: event.target.checked,
+                      })}
+                      disabled={!repositoryPreferences.enforce8Hours}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body1">Cross-Repository Distribution</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Participate in cross-repository hour distribution
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </Box>
             </>
           )}
 
@@ -254,6 +276,9 @@ export const RepositorySettings: React.FC<RepositorySettingsProps> = ({
                 </Typography>
                 <Typography variant="body2">
                   • Automatic Hour Redistribution: {globalPreferences.autoRedistributeHours ? 'Yes' : 'No'}
+                </Typography>
+                <Typography variant="body2">
+                  • Cross-Repository Distribution: {globalPreferences.distributeAcrossRepositories ? 'Yes' : 'No'}
                 </Typography>
               </Box>
             </Box>

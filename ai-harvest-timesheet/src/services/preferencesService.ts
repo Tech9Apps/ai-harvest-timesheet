@@ -9,11 +9,13 @@ const STORAGE_KEYS = {
 const DEFAULT_GLOBAL_PREFERENCES: GlobalPreferences = {
   enforce8Hours: true,
   autoRedistributeHours: true,
+  distributeAcrossRepositories: false,
 };
 
 const DEFAULT_REPOSITORY_PREFERENCES: RepositoryPreferences = {
   enforce8Hours: true,
   autoRedistributeHours: true,
+  distributeAcrossRepositories: false,
   useGlobalSettings: true,
 };
 
@@ -157,6 +159,7 @@ class PreferencesService {
       return {
         enforce8Hours: repositoryPreferences.enforce8Hours,
         autoRedistributeHours: repositoryPreferences.autoRedistributeHours,
+        distributeAcrossRepositories: repositoryPreferences.distributeAcrossRepositories,
       };
     } catch (error) {
       console.error('Error retrieving effective preferences:', error);
