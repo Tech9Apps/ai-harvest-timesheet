@@ -11,6 +11,7 @@ interface DateRangeSelectorProps {
   onDateRangeChange: (startDate: Date, endDate: Date) => void;
   onRangeTypeChange: (rangeType: 'today' | 'custom') => void;
   rangeType: 'today' | 'custom';
+  disabled?: boolean;
 }
 
 export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
@@ -19,6 +20,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   onDateRangeChange,
   onRangeTypeChange,
   rangeType,
+  disabled = false,
 }) => {
   const handleRangeTypeChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -41,6 +43,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
           exclusive
           onChange={handleRangeTypeChange}
           size="small"
+          disabled={disabled}
         >
           <ToggleButton value="today">
             Today
@@ -63,6 +66,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
               slotProps={{
                 textField: {
                   size: 'small',
+                  disabled: disabled,
                 },
               }}
             />
@@ -78,6 +82,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
               slotProps={{
                 textField: {
                   size: 'small',
+                  disabled: disabled,
                 },
               }}
             />
