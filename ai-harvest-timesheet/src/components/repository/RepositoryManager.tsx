@@ -65,7 +65,7 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
       </Typography>
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <TextField
-          fullWidth
+          sx={{ flex: '0 1 90%' }}
           label="Repository Path"
           value={repoPath}
           onChange={(e) => setRepoPath(e.target.value)}
@@ -88,7 +88,7 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
           variant="contained"
           onClick={handleAddRepository}
           disabled={!repoPath}
-          sx={{ height: 'fit-content', mt: 1 }}
+          sx={{ height: 'fit-content', mt: 1, minWidth: '15%' }}
         >
           Add Repository
         </Button>
