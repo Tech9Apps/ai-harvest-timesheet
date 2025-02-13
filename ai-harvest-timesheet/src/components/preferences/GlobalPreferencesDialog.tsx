@@ -30,7 +30,7 @@ const DISTRIBUTION_STRATEGIES = {
   },
   'commit-size': {
     label: 'Based on Commit Size',
-    description: 'Distribute hours based on commit type, message length, and ticket references'
+    description: 'Distribute hours based on number of files changed, lines of code, and file types. Additional weight for large file changes.'
   }
 };
 
@@ -164,7 +164,13 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
               marks
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => `${value} hours`}
+              disabled={globalPreferences.distributionStrategy === 'equal'}
             />
+            {globalPreferences.distributionStrategy === 'equal' && (
+              <Typography variant="caption" color="text.secondary">
+                Minimum hours are not applicable with equal distribution
+              </Typography>
+            )}
           </Box>
 
           <Box sx={{ mb: 2 }}>
@@ -180,7 +186,13 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
               marks
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => `${value} hours`}
+              disabled={globalPreferences.distributionStrategy === 'equal'}
             />
+            {globalPreferences.distributionStrategy === 'equal' && (
+              <Typography variant="caption" color="text.secondary">
+                Maximum hours are not applicable with equal distribution
+              </Typography>
+            )}
           </Box>
         </Box>
       </DialogContent>

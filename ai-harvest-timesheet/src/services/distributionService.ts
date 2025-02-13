@@ -36,7 +36,7 @@ export class DistributionService {
           weight += 0.3; // Config changes are less significant
           break;
         case 'other':
-          weight += 0.2; // Other file types have minimal impact
+          weight += 0.6; // Other file types have minimal impact
           break;
       }
 
