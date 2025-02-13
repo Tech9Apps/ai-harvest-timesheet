@@ -10,6 +10,7 @@ Harvest Timesheet is a desktop application that automates time tracking in Harve
 - Extracts ticket numbers from branch names for better organization
 - Works with multiple repositories and Harvest projects
 - Preserves your commit messages as time entry descriptions
+- Enables/disables repositories without losing configuration
 
 This tool is perfect for developers who want to maintain accurate time records without the interruption of manual time entry.
 
@@ -55,7 +56,32 @@ There are two ways to run the application:
 Once installed and opened:
 1. The application will ask for your Harvest credentials
 2. Follow the in-app instructions to set up your repositories and Harvest project mappings
-3. You're ready to start tracking time based on your Git commits!
+3. Configure your repositories:
+   - Add repository paths
+   - Set up Harvest project and task mappings
+   - Enable/disable repositories as needed
+   - Configure optional webhooks
+4. You're ready to start tracking time based on your Git commits!
+
+## Managing Repositories
+
+### Adding Repositories
+1. Click "Add Repository"
+2. Enter the full path to your Git repository
+3. Configure Harvest project and task
+4. The repository will be enabled by default
+
+### Enabling/Disabling Repositories
+- Use the toggle switch next to each repository to enable/disable it
+- Disabled repositories:
+  - Are grayed out in the UI
+  - Won't be included in commit fetching
+  - Won't be included in time entry syncing
+  - Maintain their configuration for when re-enabled
+- Enable/disable is useful for:
+  - Temporarily excluding repositories from time tracking
+  - Managing multiple projects without removing configuration
+  - Focusing on specific repositories during busy periods
 
 ## Need Help?
 

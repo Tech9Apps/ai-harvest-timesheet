@@ -105,3 +105,21 @@ The built app will be available in the `release` directory:
 3. Commit your changes
 4. Push to the branch
 5. Create a new Pull Request 
+
+## Configuration
+
+### Repository Settings
+- Path: Local path to Git repository
+- Project: Associated Harvest project
+- Task: Associated Harvest task
+- Enable/Disable: Toggle repository activity
+- Webhook URL (optional): For custom commit message formatting
+
+### Time Preferences
+- Enforce 8-hour day
+- Auto-redistribute hours
+- Cross-repository distribution
+
+## License
+
+[MIT](LICENSE) 

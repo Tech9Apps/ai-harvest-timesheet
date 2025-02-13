@@ -43,7 +43,8 @@ function App() {
   const handleAddRepository = (repository: Repository) => {
     const updatedRepositories = storageService.addRepository({
       ...repository,
-      extractTicketNumber: true, // Default to true for new repositories
+      extractTicketNumber: true,
+      enabled: true, // Ensure new repositories are enabled by default
     });
     setRepositories(updatedRepositories);
     setSuccess('Repository added successfully');
@@ -67,8 +68,8 @@ function App() {
     const newCommits: { [repoPath: string]: CommitInfo[] } = {};
     
     try {
-      // First, fetch all commits from repositories
-      for (const repository of repositories) {
+      // First, fetch all commits from enabled repositories only
+      for (const repository of repositories.filter(repo => repo.enabled)) {
         const gitService = new GitService(repository);
         const isValid = await gitService.validateRepository();
         
@@ -89,8 +90,8 @@ function App() {
         }
       }
 
-      // Then, process webhooks for repositories that have them configured
-      for (const repository of repositories) {
+      // Then, process webhooks for enabled repositories that have them configured
+      for (const repository of repositories.filter(repo => repo.enabled)) {
         if (repository.webhookUrl && newCommits[repository.path]) {
           const commits = newCommits[repository.path];
           const webhookRequest = {
@@ -136,11 +137,37 @@ function App() {
 
   const handleSync = async (timeEntries: TimeEntry[]) => {
     try {
-      for (const entry of timeEntries) {
+      // Get the list of enabled repositories
+      const enabledRepos = repositories.filter(repo => repo.enabled);
+      const enabledRepoPaths = enabledRepos.map(repo => repo.path);
+
+      // Filter time entries to only include those from enabled repositories
+      const enabledTimeEntries = timeEntries.filter(entry => {
+        // Find the repository this time entry belongs to
+        const repo = repositories.find(r => 
+          r.harvestProjectId === entry.projectId && 
+          r.harvestTaskId === entry.taskId
+        );
+        return repo && repo.enabled;
+      });
+
+      if (enabledTimeEntries.length === 0) {
+        setError('No time entries to sync from enabled repositories');
+        return;
+      }
+
+      for (const entry of enabledTimeEntries) {
         await harvestApi.createTimeEntry(entry);
       }
-      setSuccess('Time entries synced successfully');
-      setCommits({});
+
+      setSuccess(`Time entries synced successfully (${enabledTimeEntries.length} entries from enabled repositories)`);
+      
+      // Only clear commits for enabled repositories
+      const updatedCommits = { ...commits };
+      enabledRepoPaths.forEach(path => {
+        delete updatedCommits[path];
+      });
+      setCommits(updatedCommits);
     } catch (error) {
       setError('Error syncing time entries');
       console.error('Error syncing time entries:', error);

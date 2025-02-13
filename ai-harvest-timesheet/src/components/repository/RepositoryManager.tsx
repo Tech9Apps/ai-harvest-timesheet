@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, List, ListItem, ListItemText, IconButton, Typography } from '@mui/material';
+import {
+  Box,
+  TextField,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton,
+  Typography,
+  Switch,
+  Tooltip,
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useLoading } from '../../context/LoadingContext';
@@ -34,6 +45,7 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
         harvestProjectId: '',
         harvestTaskId: '',
         extractTicketNumber: true,
+        enabled: true, // New repositories are enabled by default
       };
 
       onRepositoryAdd(newRepo);
@@ -56,6 +68,13 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
   const handleSaveSettings = (updatedRepo: Repository) => {
     onRepositoryUpdate(updatedRepo);
     setSelectedRepo(null);
+  };
+
+  const handleToggleEnabled = (repo: Repository) => {
+    onRepositoryUpdate({
+      ...repo,
+      enabled: !repo.enabled,
+    });
   };
 
   return (
@@ -98,8 +117,25 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
         {repositories.map((repo) => (
           <ListItem
             key={repo.id}
+            sx={{
+              opacity: repo.enabled ? 1 : 0.6,
+              transition: 'opacity 0.2s ease-in-out',
+              '&:hover': {
+                opacity: 1,
+              },
+              bgcolor: repo.enabled ? 'transparent' : 'action.hover',
+              borderLeft: (theme) => 
+                `4px solid ${repo.enabled ? theme.palette.success.main : theme.palette.action.disabled}`,
+            }}
             secondaryAction={
-              <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Tooltip title={repo.enabled ? 'Disable Repository' : 'Enable Repository'}>
+                  <Switch
+                    checked={repo.enabled}
+                    onChange={() => handleToggleEnabled(repo)}
+                    color="success"
+                  />
+                </Tooltip>
                 <IconButton
                   edge="end"
                   aria-label="settings"
@@ -119,12 +155,40 @@ export const RepositoryManager: React.FC<RepositoryManagerProps> = ({
             }
           >
             <ListItemText
-              primary={repo.path.split('/').pop()}
+              primary={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    variant="subtitle1"
+                    component="span"
+                    sx={{
+                      color: repo.enabled ? 'text.primary' : 'text.disabled',
+                    }}
+                  >
+                    {repo.path.split('/').pop()}
+                  </Typography>
+                  {!repo.enabled && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.disabled',
+                        bgcolor: 'action.hover',
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1,
+                      }}
+                    >
+                      Disabled
+                    </Typography>
+                  )}
+                </Box>
+              }
               secondary={
                 <Box component="span" sx={{ display: 'block' }}>
-                  <Box component="span" sx={{ display: 'block' }}>{repo.path}</Box>
+                  <Box component="span" sx={{ display: 'block', color: repo.enabled ? 'text.secondary' : 'text.disabled' }}>
+                    {repo.path}
+                  </Box>
                   {repo.harvestProjectId && repo.harvestTaskId && (
-                    <Box component="span" sx={{ color: 'success.main', fontSize: '0.875rem' }}>
+                    <Box component="span" sx={{ color: repo.enabled ? 'success.main' : 'text.disabled', fontSize: '0.875rem' }}>
                       ✓ Harvest settings configured
                     </Box>
                   )}

@@ -5,6 +5,7 @@ export interface Repository {
   harvestTaskId: string;
   extractTicketNumber: boolean;
   webhookUrl?: string;
+  enabled: boolean;
 }
 
 export interface HarvestProject {

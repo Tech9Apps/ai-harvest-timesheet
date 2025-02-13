@@ -111,6 +111,11 @@
   - [x] Component documentation
 
 ## Recent Updates
+- Added repository enable/disable functionality
+  - Toggle switch for each repository
+  - Visual indicators for disabled state
+  - Filtered commit fetching for enabled repositories only
+  - Selective time entry syncing based on repository state
 - Added comprehensive error handling for storage operations
 - Implemented custom error classes for different storage scenarios
 - Added loading state feedback for async operations
@@ -141,3 +146,4 @@
 - UI improvements completed with enhanced user feedback
 - Webhook integration completed with custom hours support
 - Data persistence layer enhanced with proper error handling
+- Repository management enhanced with enable/disable functionality
