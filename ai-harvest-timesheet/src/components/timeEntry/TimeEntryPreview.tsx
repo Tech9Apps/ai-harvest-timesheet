@@ -55,7 +55,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
   onSync,
   onRefresh,
 }) => {
-  const { setLoading } = useLoading();
+  const { setLoading, isLoading } = useLoading();
   const { getEffectivePreferences } = usePreferences();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -67,7 +67,6 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [pendingRefresh, setPendingRefresh] = useState<{ startDate?: Date; endDate?: Date } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     // Process commits when they change
@@ -466,25 +465,25 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
           );
           return;
         }
-      } else {
-        // Validate each repository separately
-        for (const [repoPath, repoCommits] of Object.entries(dateCommits)) {
-          const repository = repositories.find(repo => repo.path === repoPath);
-          if (!repository) {
-            setError(`Unable to sync: Repository configuration not found for ${repoPath}`);
-            return;
-          }
+      }
 
-          const preferences = getEffectivePreferences(repository.path);
-          if (preferences.enforce8Hours) {
-            const totalRepoHours = repoCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
-            if (totalRepoHours > 8) {
-              setError(
-                `Unable to sync: Total hours for ${repository.path.split('/').pop()} ` +
-                `(${totalRepoHours.toFixed(2)}) exceed the 8-hour limit`
-              );
-              return;
-            }
+      // Validate each repository separately
+      for (const [repoPath, repoCommits] of Object.entries(dateCommits)) {
+        const repository = repositories.find(repo => repo.path === repoPath);
+        if (!repository) {
+          setError(`Unable to sync: Repository configuration not found for ${repoPath}`);
+          return;
+        }
+
+        const preferences = getEffectivePreferences(repository.path);
+        if (preferences.enforce8Hours) {
+          const totalRepoHours = repoCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
+          if (totalRepoHours > 8) {
+            setError(
+              `Unable to sync: Total hours for ${repository.path.split('/').pop()} ` +
+              `(${totalRepoHours.toFixed(2)}) exceed the 8-hour limit`
+            );
+            return;
           }
         }
       }
@@ -502,7 +501,6 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     }
 
     try {
-      setIsSyncing(true);
       setLoading(true);
       setError(null);
       setSuccess(null);
@@ -537,7 +535,6 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
         'Please check your internet connection and Harvest credentials, then try again.'
       );
     } finally {
-      setIsSyncing(false);
       setLoading(false);
     }
   };
@@ -580,10 +577,9 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
           <Button
             variant="contained"
             onClick={handleSync}
-            disabled={Object.keys(processedCommits).length === 0 || isSyncing}
-            startIcon={isSyncing ? <CircularProgress size={20} /> : undefined}
+            disabled={Object.keys(processedCommits).length === 0 || isLoading}
           >
-            {isSyncing ? 'Syncing...' : 'Sync to Harvest'}
+            Sync to Harvest
           </Button>
         </Box>
       </Box>
@@ -594,7 +590,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
         onDateRangeChange={handleDateRangeChange}
         onRangeTypeChange={handleRangeTypeChange}
         rangeType={rangeType}
-        disabled={isRefreshing || isSyncing}
+        disabled={isRefreshing}
       />
 
       <Paper elevation={2}>
@@ -760,22 +756,6 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
           {success}
         </Alert>
       </Snackbar>
-
-      <Backdrop
-        sx={{ 
-          color: '#fff', 
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2
-        }}
-        open={isSyncing}
-      >
-        <CircularProgress color="inherit" />
-        <Typography>
-          Syncing time entries to Harvest...
-        </Typography>
-      </Backdrop>
     </Box>
   );
 }; 
