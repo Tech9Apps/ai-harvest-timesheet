@@ -78,6 +78,19 @@ Access via "Time Preferences" button:
 
 ### Webhook Integration
 
+The webhook integration allows you to customize commit message formatting and specify custom hours for commits. This is useful for:
+- Integrating with ticket systems
+- Formatting commit messages according to your team's standards
+- Setting specific hours for commits based on external data
+- Automating time allocation based on commit metadata
+
+#### Webhook Configuration
+1. In repository settings, provide a webhook URL
+2. The webhook will receive POST requests with commit data
+3. Return formatted messages and optional custom hours
+4. All communication is in JSON format
+
+#### Request Format
 ```json
 {
   "request": {
@@ -93,6 +106,49 @@ Access via "Time Preferences" button:
   }
 }
 ```
+
+#### Expected Response Format
+```json
+{
+  "repositoryName": "my-project",
+  "branchName": "123-feature-branch",
+  "commits": [
+    {
+      "hash": "abc123",
+      "message": "Add new feature",
+      "date": "2024-03-14T10:30:00Z",
+      "formattedMessage": "PROJ-123: Add new feature - Implementation complete",
+      "hours": 2.5
+    }
+  ]
+}
+```
+
+#### Response Fields
+- `formattedMessage`: (Optional) Custom formatted message for the time entry
+- `hours`: (Optional) Custom hours for the commit (overrides automatic distribution)
+
+#### Error Handling
+- If the webhook fails, original commit messages will be used
+- If custom hours are not provided, automatic distribution applies
+- Network timeouts are handled gracefully
+- CORS must be properly configured on the webhook server
+
+#### Example Use Cases
+1. **Ticket System Integration**
+   - Extract ticket numbers from branch names
+   - Fetch ticket details from your issue tracker
+   - Include ticket summaries in time entries
+
+2. **Custom Time Allocation**
+   - Set specific hours based on commit tags
+   - Allocate time based on file changes
+   - Apply team-specific time allocation rules
+
+3. **Message Standardization**
+   - Enforce consistent message formats
+   - Add project prefixes
+   - Include additional context from external systems
 
 ### Hour Distribution Logic
 
