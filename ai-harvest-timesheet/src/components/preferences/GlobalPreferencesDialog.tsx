@@ -10,6 +10,11 @@ import {
   Typography,
   Box,
   Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Slider,
 } from '@mui/material';
 import { usePreferences } from '../../context/PreferencesContext';
 
@@ -17,6 +22,17 @@ interface GlobalPreferencesDialogProps {
   open: boolean;
   onClose: () => void;
 }
+
+const DISTRIBUTION_STRATEGIES = {
+  equal: {
+    label: 'Equal Distribution',
+    description: 'Distribute hours evenly across all commits'
+  },
+  'commit-size': {
+    label: 'Based on Commit Size',
+    description: 'Distribute hours based on commit type, message length, and ticket references'
+  }
+};
 
 export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = ({
   open,
@@ -53,7 +69,7 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
               control={
                 <Switch
                   checked={globalPreferences.enforce8Hours}
-                  onChange={handleEnforce8HoursChange}
+                  onChange={(e) => updateGlobalPreferences({ enforce8Hours: e.target.checked })}
                 />
               }
               label={
@@ -74,7 +90,7 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
               control={
                 <Switch
                   checked={globalPreferences.autoRedistributeHours}
-                  onChange={handleAutoRedistributeChange}
+                  onChange={(e) => updateGlobalPreferences({ autoRedistributeHours: e.target.checked })}
                   disabled={!globalPreferences.enforce8Hours}
                 />
               }
@@ -91,12 +107,12 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
 
           <Divider sx={{ my: 2 }} />
 
-          <Box>
+          <Box sx={{ mb: 3 }}>
             <FormControlLabel
               control={
                 <Switch
                   checked={globalPreferences.distributeAcrossRepositories}
-                  onChange={handleDistributeAcrossReposChange}
+                  onChange={(e) => updateGlobalPreferences({ distributeAcrossRepositories: e.target.checked })}
                   disabled={!globalPreferences.enforce8Hours}
                 />
               }
@@ -108,6 +124,62 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
                   </Typography>
                 </Box>
               }
+            />
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="subtitle1" gutterBottom>
+            Distribution Settings
+          </Typography>
+
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Distribution Strategy</InputLabel>
+            <Select
+              value={globalPreferences.distributionStrategy}
+              onChange={(e) => updateGlobalPreferences({ 
+                distributionStrategy: e.target.value as keyof typeof DISTRIBUTION_STRATEGIES 
+              })}
+              label="Distribution Strategy"
+            >
+              {Object.entries(DISTRIBUTION_STRATEGIES).map(([value, { label }]) => (
+                <MenuItem key={value} value={value}>{label}</MenuItem>
+              ))}
+            </Select>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+              {DISTRIBUTION_STRATEGIES[globalPreferences.distributionStrategy].description}
+            </Typography>
+          </FormControl>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" gutterBottom>
+              Minimum Hours per Commit
+            </Typography>
+            <Slider
+              value={globalPreferences.minimumCommitHours}
+              onChange={(_, value) => updateGlobalPreferences({ minimumCommitHours: value as number })}
+              min={0.25}
+              max={2}
+              step={0.25}
+              marks
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${value} hours`}
+            />
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" gutterBottom>
+              Maximum Hours per Commit
+            </Typography>
+            <Slider
+              value={globalPreferences.maximumCommitHours}
+              onChange={(_, value) => updateGlobalPreferences({ maximumCommitHours: value as number })}
+              min={2}
+              max={6}
+              step={0.5}
+              marks
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${value} hours`}
             />
           </Box>
         </Box>

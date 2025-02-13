@@ -2,6 +2,10 @@ export interface TimePreferences {
   enforce8Hours: boolean;
   autoRedistributeHours: boolean;
   distributeAcrossRepositories: boolean;
+  distributionStrategy: 'equal' | 'commit-size';
+  minimumCommitHours: number;
+  maximumCommitHours: number;
+  roundingPrecision: number;
 }
 
 export interface RepositoryPreferences extends TimePreferences {

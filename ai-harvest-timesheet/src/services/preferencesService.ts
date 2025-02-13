@@ -10,12 +10,20 @@ const DEFAULT_GLOBAL_PREFERENCES: GlobalPreferences = {
   enforce8Hours: true,
   autoRedistributeHours: true,
   distributeAcrossRepositories: false,
+  distributionStrategy: 'weighted',
+  minimumCommitHours: 0.25,
+  maximumCommitHours: 4,
+  roundingPrecision: 2,
 };
 
 const DEFAULT_REPOSITORY_PREFERENCES: RepositoryPreferences = {
   enforce8Hours: true,
   autoRedistributeHours: true,
   distributeAcrossRepositories: false,
+  distributionStrategy: 'weighted',
+  minimumCommitHours: 0.25,
+  maximumCommitHours: 4,
+  roundingPrecision: 2,
   useGlobalSettings: true,
 };
 

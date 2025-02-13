@@ -2,7 +2,7 @@ import simpleGit, { SimpleGit } from 'simple-git';
 import { startOfDay, endOfDay, format } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
-import { CommitInfo, Repository } from '../types';
+import { CommitInfo, Repository, DiffStats } from '../types';
 
 export class GitService {
   private git: SimpleGit | null = null;
@@ -80,6 +80,87 @@ export class GitService {
     }
   }
 
+  private async getCurrentBranch(): Promise<string> {
+    try {
+      const git = await this.initGit();
+      const branchResult = await git.branch();
+      return branchResult.current || 'unknown';
+    } catch (error) {
+      console.error('Error getting current branch:', error);
+      return 'unknown';
+    }
+  }
+
+  private determineFileType(filename: string): 'source' | 'test' | 'config' | 'other' {
+    const lowerFilename = filename.toLowerCase();
+    
+    // Test files
+    if (lowerFilename.includes('test') || lowerFilename.includes('spec')) {
+      return 'test';
+    }
+    
+    // Configuration files
+    const configExtensions = ['.json', '.yml', '.yaml', '.toml', '.ini', '.config'];
+    if (configExtensions.some(ext => lowerFilename.endsWith(ext)) ||
+        lowerFilename.includes('config') ||
+        lowerFilename.includes('.env')) {
+      return 'config';
+    }
+    
+    // Source code files
+    const sourceExtensions = [
+      '.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.cpp', '.c',
+      '.go', '.rb', '.php', '.cs', '.swift', '.kt', '.rs'
+    ];
+    if (sourceExtensions.some(ext => lowerFilename.endsWith(ext))) {
+      return 'source';
+    }
+    
+    return 'other';
+  }
+
+  private async getDiffStats(commitHash: string): Promise<DiffStats> {
+    try {
+      const git = await this.initGit();
+      
+      // Get the commit diff
+      const diff = await git.show([
+        commitHash,
+        '--numstat',  // Get numeric statistics
+        '--format=',  // Don't show commit message
+      ]);
+
+      // Parse the numstat output
+      const files = diff.trim().split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          const [insertions, deletions, filename] = line.split('\t');
+          return {
+            filename,
+            insertions: parseInt(insertions) || 0,
+            deletions: parseInt(deletions) || 0,
+            changes: (parseInt(insertions) || 0) + (parseInt(deletions) || 0),
+            type: this.determineFileType(filename)
+          };
+        });
+
+      return {
+        filesChanged: files.length,
+        insertions: files.reduce((sum, file) => sum + file.insertions, 0),
+        deletions: files.reduce((sum, file) => sum + file.deletions, 0),
+        files
+      };
+    } catch (error) {
+      console.error('Error getting diff stats:', error);
+      return {
+        filesChanged: 0,
+        insertions: 0,
+        deletions: 0,
+        files: []
+      };
+    }
+  }
+
   async getCommits(since: Date, until: Date): Promise<CommitInfo[]> {
     try {
       const git = await this.initGit();
@@ -110,32 +191,30 @@ export class GitService {
 
       const { ticketNumber, branchTitle } = this.formatBranchName(currentBranch);
 
-      return logResult.all.map(commit => ({
-        hash: commit.hash,
-        date: commit.date,
-        message: commit.message,
-        branch: currentBranch,
-        formattedMessage: ticketNumber 
-          ? `${ticketNumber} | ${branchTitle} | ${commit.message}`
-          : `${branchTitle} | ${commit.message}`,
-      }));
+      // Get diff stats for each commit
+      const commitsWithStats = await Promise.all(
+        logResult.all.map(async commit => {
+          const diffStats = await this.getDiffStats(commit.hash);
+          return {
+            hash: commit.hash,
+            date: commit.date,
+            message: commit.message,
+            branch: currentBranch,
+            formattedMessage: ticketNumber 
+              ? `${ticketNumber} | ${branchTitle} | ${commit.message}`
+              : `${branchTitle} | ${commit.message}`,
+            diffStats
+          };
+        })
+      );
+
+      return commitsWithStats;
     } catch (error) {
       console.error('Error fetching commits:', error);
       if (error instanceof Error) {
         console.error('Error details:', error.message);
       }
       throw error;
-    }
-  }
-
-  private async getCurrentBranch(): Promise<string> {
-    try {
-      const git = await this.initGit();
-      const branchResult = await git.branch();
-      return branchResult.current || 'unknown';
-    } catch (error) {
-      console.error('Error getting current branch:', error);
-      return 'unknown';
     }
   }
 

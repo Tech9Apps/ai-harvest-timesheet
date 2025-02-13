@@ -7,6 +7,7 @@ import { usePreferences } from '../../context/PreferencesContext';
 import { DateRangeSelector } from './DateRangeSelector';
 import { HourEditor } from './HourEditor';
 import { RefreshWarningDialog } from './RefreshWarningDialog';
+import { DistributionService } from '../../services/distributionService';
 
 interface TimeEntryPreviewProps {
   commits: { [repoPath: string]: CommitInfo[] };
@@ -75,18 +76,6 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     
     // Process each day independently
     Object.entries(commitsByDate).forEach(([date, dateCommits]) => {
-      let totalCommitCount = 0;
-      
-      // Count total commits for this day (only needed for cross-repo distribution)
-      if (Object.values(dateCommits).some(repoCommits => {
-        const repository = repositories.find(repo => repo.path === Object.keys(dateCommits).find(path => dateCommits[path] === repoCommits));
-        return repository && getEffectivePreferences(repository.path).distributeAcrossRepositories;
-      })) {
-        Object.values(dateCommits).forEach(repoCommits => {
-          totalCommitCount += repoCommits.length;
-        });
-      }
-      
       // Process each repository's commits for this day
       Object.entries(dateCommits).forEach(([repoPath, repoCommits]) => {
         const repository = repositories.find(repo => repo.path === repoPath);
@@ -102,11 +91,18 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
           newProcessedCommits[repoPath].push(...repoCommits);
         } else if (preferences.enforce8Hours) {
           if (preferences.distributeAcrossRepositories) {
-            // Distribute 8 hours across all commits for this day
-            const hoursPerCommit = 8 / totalCommitCount;
+            // Get all commits for this day across repositories
+            const allDayCommits = Object.values(dateCommits).flat();
+            const distribution = DistributionService.distributeHours(
+              allDayCommits,
+              8,
+              preferences
+            );
+
+            // Apply distributed hours to this repository's commits
             const processedCommits = repoCommits.map(commit => ({
               ...commit,
-              hours: hoursPerCommit,
+              hours: distribution.get(commit.hash) ?? 0,
             }));
             
             if (!newProcessedCommits[repoPath]) {
@@ -115,10 +111,15 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
             newProcessedCommits[repoPath].push(...processedCommits);
           } else {
             // Distribute 8 hours within this repository only
-            const hoursPerCommit = 8 / repoCommits.length;
+            const distribution = DistributionService.distributeHours(
+              repoCommits,
+              8,
+              preferences
+            );
+
             const processedCommits = repoCommits.map(commit => ({
               ...commit,
-              hours: hoursPerCommit,
+              hours: distribution.get(commit.hash) ?? 0,
             }));
             
             if (!newProcessedCommits[repoPath]) {
@@ -194,115 +195,65 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
 
   const redistributeHours = (repoPath: string, adjustedCommit: CommitInfo, newHours: number) => {
     const repository = repositories.find(repo => repo.path === repoPath);
-    if (!repository) {
-      setError('Unable to redistribute hours: Repository configuration not found.');
-      return;
-    }
+    if (!repository) return;
 
     const preferences = getEffectivePreferences(repository.path);
-    if (!preferences.enforce8Hours || !preferences.autoRedistributeHours) {
-      return;
-    }
+    if (!preferences.autoRedistributeHours) return;
+
+    const date = adjustedCommit.date;
+    const remainingHours = 8 - newHours;
 
     if (preferences.distributeAcrossRepositories) {
-      // Redistribute across all repositories for the day
-      const commitDate = format(parseISO(adjustedCommit.date), 'yyyy-MM-dd');
-      const commitsByDate = groupCommitsByDate(processedCommits);
-      const dateCommits = commitsByDate[commitDate] || {};
+      // Get all commits for this day across repositories
+      const allCommits = Object.entries(commits)
+        .flatMap(([path, repoCommits]) => 
+          repoCommits
+            .filter(commit => 
+              commit.date === date && 
+              commit.hash !== adjustedCommit.hash &&
+              repositories.find(r => r.path === path)?.enabled
+            )
+        );
 
-      const totalHours = Object.values(dateCommits).reduce((sum, commits) => 
-        sum + commits.reduce((repoSum, commit) => repoSum + (commit.hours ?? 0), 0),
-        0
-      );
-      const remainingHours = 8 - totalHours;
-
-      if (remainingHours <= 0) {
-        setError(`Cannot redistribute hours: Total hours for ${format(parseISO(commitDate), 'MMM dd, yyyy')} already at or exceeding 8-hour limit.`);
-        return;
-      }
-
-      // Get all commits for this day except the adjusted one
-      const allOtherCommits = Object.entries(dateCommits).flatMap(([path, commits]) => 
-        path === repoPath 
-          ? commits.filter(commit => commit.hash !== adjustedCommit.hash)
-          : commits
+      const distribution = DistributionService.distributeHours(
+        allCommits,
+        remainingHours,
+        preferences
       );
 
-      if (allOtherCommits.length === 0) {
-        setError('Cannot redistribute hours: No other commits available for redistribution.');
-        return;
-      }
-
-      const totalOtherHours = allOtherCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
-      const ratio = remainingHours / totalOtherHours;
-
-      // Update all repositories for this day
-      const updatedCommits = { ...processedCommits };
-      Object.entries(dateCommits).forEach(([path, commits]) => {
-        const updatedRepoCommits = commits.map(commit => {
-          if (path === repoPath && commit.hash === adjustedCommit.hash) {
-            return { ...commit, hours: newHours };
-          }
-          return {
-            ...commit,
-            hours: ((commit.hours ?? 0) * ratio)
-          };
+      // Update all repositories
+      setProcessedCommits(prev => {
+        const newProcessedCommits = { ...prev };
+        Object.keys(newProcessedCommits).forEach(path => {
+          newProcessedCommits[path] = prev[path].map(commit => {
+            if (commit.hash === adjustedCommit.hash) return { ...commit, hours: newHours };
+            const distributedHours = distribution.get(commit.hash);
+            return distributedHours !== undefined ? { ...commit, hours: distributedHours } : commit;
+          });
         });
-
-        if (!updatedCommits[path]) {
-          updatedCommits[path] = [];
-        }
-        // Find and update only commits for this day
-        updatedCommits[path] = processedCommits[path].map(commit => {
-          const updatedCommit = updatedRepoCommits.find(uc => uc.hash === commit.hash);
-          return updatedCommit || commit;
-        });
+        return newProcessedCommits;
       });
-
-      setProcessedCommits(updatedCommits);
-      setSuccess(
-        `Hours updated and redistributed across repositories:\n` +
-        `• Set to ${newHours.toFixed(2)} hours for current commit\n` +
-        `• Remaining ${remainingHours.toFixed(2)} hours split among ${allOtherCommits.length} other commit${allOtherCommits.length === 1 ? '' : 's'}`
-      );
     } else {
-      // Original single-repository redistribution logic
-      const repoCommits = [...(processedCommits[repoPath] || [])];
-      const otherCommits = repoCommits.filter(commit => commit.hash !== adjustedCommit.hash);
-      const remainingHours = 8 - newHours;
-      
-      if (remainingHours <= 0 || otherCommits.length === 0) {
-        if (remainingHours < 0) {
-          setError(`Cannot redistribute hours: Entry of ${newHours.toFixed(2)} hours already exceeds the 8-hour limit.`);
-        } else if (otherCommits.length === 0) {
-          setError('Cannot redistribute hours: No other commits available for redistribution.');
-        }
-        return;
-      }
+      // Get commits only from this repository
+      const repoCommits = commits[repoPath]?.filter(
+        commit => commit.date === date && commit.hash !== adjustedCommit.hash
+      ) || [];
 
-      const totalOtherHours = otherCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
-      const ratio = remainingHours / totalOtherHours;
+      const distribution = DistributionService.distributeHours(
+        repoCommits,
+        remainingHours,
+        preferences
+      );
 
-      const updatedCommits = repoCommits.map(commit => {
-        if (commit.hash === adjustedCommit.hash) {
-          return { ...commit, hours: newHours };
-        }
-        return {
-          ...commit,
-          hours: ((commit.hours ?? 0) * ratio)
-        };
-      });
-
+      // Update commits in this repository
       setProcessedCommits(prev => ({
         ...prev,
-        [repoPath]: updatedCommits
+        [repoPath]: prev[repoPath].map(commit => {
+          if (commit.hash === adjustedCommit.hash) return { ...commit, hours: newHours };
+          const distributedHours = distribution.get(commit.hash);
+          return distributedHours !== undefined ? { ...commit, hours: distributedHours } : commit;
+        })
       }));
-
-      setSuccess(
-        `Hours updated and redistributed:\n` +
-        `• Set to ${newHours.toFixed(2)} hours for current commit\n` +
-        `• Remaining ${remainingHours.toFixed(2)} hours split among ${otherCommits.length} other commit${otherCommits.length === 1 ? '' : 's'}`
-      );
     }
   };
 

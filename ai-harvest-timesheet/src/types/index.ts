@@ -30,6 +30,19 @@ export interface TimeEntry {
   notes: string;
 }
 
+export interface DiffStats {
+  filesChanged: number;
+  insertions: number;
+  deletions: number;
+  files: {
+    filename: string;
+    changes: number;
+    insertions: number;
+    deletions: number;
+    type: 'source' | 'test' | 'config' | 'other';
+  }[];
+}
+
 export interface CommitInfo {
   hash: string;
   message: string;
@@ -37,6 +50,7 @@ export interface CommitInfo {
   branch: string;
   formattedMessage: string;
   hours?: number;
+  diffStats?: DiffStats;
 }
 
 export interface WebhookRequest {
