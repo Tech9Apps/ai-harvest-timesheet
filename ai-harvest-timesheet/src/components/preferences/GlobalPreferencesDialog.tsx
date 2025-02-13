@@ -31,6 +31,14 @@ const DISTRIBUTION_STRATEGIES = {
   'commit-size': {
     label: 'Based on Commit Size',
     description: 'Distribute hours based on number of files changed, lines of code, and file types. Additional weight for large file changes.'
+  },
+  'time-based': {
+    label: 'Time-Based Distribution',
+    description: 'Higher weight for commits during core working hours (9 AM - 5 PM), medium weight for early morning/evening (6-9 AM, 5-8 PM), and lower weight for late night commits.'
+  },
+  'impact-analysis': {
+    label: 'Impact Analysis',
+    description: 'Weight based on file types and locations (core business logic, UI, API, utils, etc.). Higher weight for core functionality and broad-impact changes.'
   }
 };
 

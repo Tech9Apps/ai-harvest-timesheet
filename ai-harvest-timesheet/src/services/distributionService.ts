@@ -8,7 +8,22 @@ export interface CommitWeight {
 }
 
 export class DistributionService {
-  private static calculateCommitWeight(commit: CommitInfo): number {
+  private static calculateCommitWeight(commit: CommitInfo, strategy: TimePreferences['distributionStrategy'] = 'commit-size'): number {
+    console.log("strategy",strategy);
+    switch (strategy) {
+      case 'equal':
+        return 1;
+      case 'time-based':
+        return this.calculateTimeBasedWeight(commit);
+      case 'impact-analysis':
+        return this.calculateImpactWeight(commit);
+      case 'commit-size':
+      default:
+        return this.calculateSizeBasedWeight(commit);
+    }
+  }
+
+  private static calculateSizeBasedWeight(commit: CommitInfo): number {
     // If no diff stats available, return 1 for equal distribution
     if (!commit.diffStats) {
       return 1;
@@ -44,8 +59,133 @@ export class DistributionService {
       weight += Math.min(file.changes / 100, 1) * 0.5;
     });
 
-    // Ensure minimum weight of 0.1 to avoid zero weights
-    return Math.max(weight, 0.1);
+    return Math.max(0.1, weight); // Ensure minimum weight of 0.1
+  }
+
+  private static calculateTimeBasedWeight(commit: CommitInfo): number {
+    const commitDate = new Date(commit.date);
+    const hour = commitDate.getHours();
+    
+    // Base weight starts at 1
+    let weight = 1;
+
+    // Core working hours (9 AM to 5 PM) get higher weight
+    if (hour >= 9 && hour < 17) {
+      weight *= 1.5;
+    }
+    // Early morning (6 AM to 9 AM) and early evening (5 PM to 8 PM) get medium weight
+    else if ((hour >= 6 && hour < 9) || (hour >= 17 && hour < 20)) {
+      weight *= 1.2;
+    }
+    // Late night commits get lower weight
+    else if (hour >= 20 || hour < 6) {
+      weight *= 0.8;
+    }
+
+    // If we have diff stats, factor in the size as well
+    if (commit.diffStats) {
+      // Add small weight for number of files (0.1 per file)
+      weight += commit.diffStats.filesChanged * 0.1;
+      
+      // Add small weight for lines changed (0.1 per 50 lines, max 1.0)
+      const totalLines = commit.diffStats.insertions + commit.diffStats.deletions;
+      weight += Math.min(totalLines / 50, 1) * 0.1;
+    }
+
+    return Math.max(0.1, weight); // Ensure minimum weight of 0.1
+  }
+
+  private static calculateImpactWeight(commit: CommitInfo): number {
+    if (!commit.diffStats) {
+      console.log('No diff stats available for impact analysis');
+      return 1;
+    }
+
+    console.log('Calculating impact weight for commit:', {
+      hash: commit.hash,
+      message: commit.message,
+      filesChanged: commit.diffStats.filesChanged
+    });
+
+    let weight = 0;
+    const fileWeights: { filename: string; weight: number; reason: string }[] = [];
+
+    // Define constants for file weights and reasons
+    const FILE_TYPE_WEIGHTS: { [key: string]: { weight: number; reason: string } } = {
+      core: { weight: 2.0, reason: 'Core business logic' },
+      ui: { weight: 1.5, reason: 'UI Component' },
+      api: { weight: 1.8, reason: 'API/Data Access' },
+      utils: { weight: 1.0, reason: 'Utils/Helpers' },
+      test: { weight: 0.8, reason: 'Test file' },
+      config: { weight: 0.5, reason: 'Configuration' },
+      other: { weight: 0.3, reason: 'Other' },
+    };
+
+    // Define arrays for file type categories
+    const CORE_FILE_PATHS = ['/services/', '/models/', '/core/', '/business/', '/domain/', '/controllers/', '/routes/',];
+    const UI_FILE_PATHS = ['/components/', '/views/', '/pages/', '/ui/', '/styles/', '/themes/', '/layout/', '/navigation/', '/forms/'];
+    const API_FILE_PATHS = ['/api/', '/data/', '/repositories/'];
+    const UTILS_FILE_PATHS = ['/utils/', '/helpers/', '/common/'];
+    const TEST_FILE_PATHS = ['.test.', '.spec.', '/__tests__/'];
+    const CONFIG_FILE_EXTENSIONS = ['json', 'yml', 'yaml', 'config', 'env'];
+
+    // Analyze each file's impact
+    commit.diffStats.files.forEach(file => {
+      const fileName = file.filename.toLowerCase();
+      const extension = fileName.split('.').pop() || '';
+      let fileWeight = 0;
+      let reason = '';
+
+      // Determine file type and assign weight and reason using arrays
+      if (CORE_FILE_PATHS.some(path => fileName.includes(path))) {
+        fileWeight += FILE_TYPE_WEIGHTS.core.weight;
+        reason = FILE_TYPE_WEIGHTS.core.reason;
+      } else if (UI_FILE_PATHS.some(path => fileName.includes(path))) {
+        fileWeight += FILE_TYPE_WEIGHTS.ui.weight;
+        reason = FILE_TYPE_WEIGHTS.ui.reason;
+      } else if (API_FILE_PATHS.some(path => fileName.includes(path))) {
+        fileWeight += FILE_TYPE_WEIGHTS.api.weight;
+        reason = FILE_TYPE_WEIGHTS.api.reason;
+      } else if (UTILS_FILE_PATHS.some(path => fileName.includes(path))) {
+        fileWeight += FILE_TYPE_WEIGHTS.utils.weight;
+        reason = FILE_TYPE_WEIGHTS.utils.reason;
+      } else if (TEST_FILE_PATHS.some(path => fileName.includes(path))) {
+        fileWeight += FILE_TYPE_WEIGHTS.test.weight;
+        reason = FILE_TYPE_WEIGHTS.test.reason;
+      } else if (CONFIG_FILE_EXTENSIONS.includes(extension) || fileName.includes('.env')) {
+        fileWeight += FILE_TYPE_WEIGHTS.config.weight;
+        reason = FILE_TYPE_WEIGHTS.config.reason;
+      } else {
+        fileWeight += FILE_TYPE_WEIGHTS.other.weight;
+        reason = FILE_TYPE_WEIGHTS.other.reason;
+      }
+
+      // Factor in the size of changes
+      const changeImpact = Math.min(file.changes / 50, 2);
+      fileWeight += changeImpact * 0.5;
+
+      weight += fileWeight;
+      fileWeights.push({
+        filename: fileName,
+        weight: fileWeight,
+        reason: `${reason} (base) + ${changeImpact * 0.5} (size impact)`
+      });
+    });
+
+    // Consider the number of files as a multiplier for broad impact
+    const fileCountMultiplier = Math.min(commit.diffStats.filesChanged / 5, 1.5);
+    const finalMultiplier = 1 + (fileCountMultiplier - 1) * 0.5;
+    
+    weight *= finalMultiplier;
+
+    console.log('Impact weight calculation:', {
+      fileWeights,
+      fileCountMultiplier,
+      finalMultiplier,
+      finalWeight: Math.max(0.1, weight)
+    });
+
+    return Math.max(0.1, weight);
   }
 
   private static smartRound(
@@ -193,6 +333,7 @@ export class DistributionService {
     totalHours: number,
     preferences: TimePreferences
   ): Map<string, number> {
+    console.log('Distribution Strategy:', preferences.distributionStrategy);
     const distribution = new Map<string, number>();
     
     if (commits.length === 0) return distribution;
@@ -218,16 +359,14 @@ export class DistributionService {
     }
 
     let weights: number[];
-    switch (preferences.distributionStrategy) {
-      case 'commit-size':
-        weights = commits.map(commit => this.calculateCommitWeight(commit));
-        break;
-
-      case 'equal':
-      default:
-        weights = commits.map(() => 1);
-        break;
-    }
+    console.log('Calculating weights with strategy:', preferences.distributionStrategy);
+    
+    // Remove the switch and directly use calculateCommitWeight with strategy
+    weights = commits.map(commit => {
+      const weight = this.calculateCommitWeight(commit, preferences.distributionStrategy);
+      console.log(`Weight for commit ${commit.hash}:`, weight);
+      return weight;
+    });
 
     // Ensure no NaN or zero weights
     weights = weights.map(w => isNaN(w) || w <= 0 ? 1 : w);

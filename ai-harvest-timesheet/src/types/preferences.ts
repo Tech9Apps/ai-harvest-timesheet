@@ -2,7 +2,7 @@ export interface TimePreferences {
   enforce8Hours: boolean;
   autoRedistributeHours: boolean;
   distributeAcrossRepositories: boolean;
-  distributionStrategy: 'equal' | 'commit-size';
+  distributionStrategy: 'equal' | 'commit-size' | 'time-based' | 'impact-analysis';
   minimumCommitHours: number;
   maximumCommitHours: number;
   roundingPrecision: number;
