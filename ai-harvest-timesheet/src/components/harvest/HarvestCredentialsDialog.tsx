@@ -9,7 +9,10 @@ import {
   Typography,
   Link,
   Box,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { harvestApi } from '../../services/harvestApi';
 import { useLoading } from '../../context/LoadingContext';
 
@@ -25,6 +28,7 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
   const [accessToken, setAccessToken] = useState('');
   const [accountId, setAccountId] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showToken, setShowToken] = useState(false);
   const { setLoading } = useLoading();
 
   useEffect(() => {
@@ -35,6 +39,7 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
       setAccessToken(savedToken);
       setAccountId(savedAccountId);
       setError(null);
+      setShowToken(false);
     }
   }, [open]);
 
@@ -76,6 +81,10 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
     }
   };
 
+  const handleToggleTokenVisibility = () => {
+    setShowToken(!showToken);
+  };
+
   return (
     <Dialog open={open} maxWidth="sm" fullWidth>
       <DialogTitle>Harvest Credentials Setup</DialogTitle>
@@ -106,6 +115,20 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
           margin="normal"
           error={!!error && !accessToken}
           helperText={error && !accessToken ? 'Access token is required' : ''}
+          type={showToken ? 'text' : 'password'}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle token visibility"
+                  onClick={handleToggleTokenVisibility}
+                  edge="end"
+                >
+                  {showToken ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <TextField
