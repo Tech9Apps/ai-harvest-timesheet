@@ -97,7 +97,7 @@ export const BranchParsingSettings: React.FC<BranchParsingSettingsProps> = ({
         sx={{ mb: 3 }}
       />
 
-      <Typography variant="subtitle2" gutterBottom sx={{ mt: 3 }}>
+      <Typography variant="subtitle2" gutterBottom>
         Preview
       </Typography>
 

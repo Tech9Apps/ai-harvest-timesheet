@@ -69,6 +69,12 @@
   - [x] Custom app name
   - [x] App icon configuration
   - [ ] Custom app icons
+- [x] Preferences Dialog Improvements
+  - [x] Tabbed layout for better organization
+  - [x] Separate sections for General, Distribution, and Branch Parsing
+  - [x] Compact and focused interface
+  - [x] Improved visual hierarchy
+  - [x] Better user experience with focused views
 
 ### Phase 4: Data Persistence (Completed)
 - [x] Local storage implementation
