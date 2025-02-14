@@ -3,34 +3,54 @@ import { startOfDay, endOfDay, format } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
 import { CommitInfo, Repository, DiffStats } from '../types';
+import { GlobalPreferences } from '../types/preferences';
+import { BranchParsingService } from './branchParsingService';
+import { preferencesService } from './preferencesService';
 
 export class GitService {
   private git: SimpleGit | null = null;
   private repoPath: string;
-  private extractTicketNumber: boolean;
+  private repository: Repository;
   
   constructor(repository: Repository) {
     this.repoPath = repository.path;
-    this.extractTicketNumber = repository.extractTicketNumber;
+    this.repository = repository;
   }
 
   private formatBranchName(branchName: string): { ticketNumber: string; branchTitle: string } {
-    if (!this.extractTicketNumber) {
+    if (!this.repository.extractTicketNumber) {
       return { ticketNumber: '', branchTitle: branchName };
     }
 
-    // Extract ticket number and branch title
-    const match = branchName.match(/^(\d+)-(.+)$/);
-    if (match) {
-      const [, ticketNumber, branchTitle] = match;
-      // Convert branch title from kebab-case to readable format
-      const readableBranchTitle = branchTitle
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-      return { ticketNumber, branchTitle: readableBranchTitle };
+    const preferences = preferencesService.getGlobalPreferences();
+    const { pattern } = preferences.branchParsing;
+    
+    const result = BranchParsingService.testPattern(pattern, branchName);
+    
+    if (result.isValid && result.ticket && result.title) {
+      return {
+        ticketNumber: result.ticket,
+        branchTitle: result.title
+      };
     }
+
+    // Fallback to original branch name if pattern doesn't match
     return { ticketNumber: '', branchTitle: branchName };
+  }
+
+  private formatCommitMessage(ticketNumber: string, branchTitle: string, commitMessage: string): string {
+    if (!this.repository.extractTicketNumber || !ticketNumber) {
+      return `${branchTitle} | ${commitMessage}`;
+    }
+
+    const preferences = preferencesService.getGlobalPreferences();
+    const { messageTemplate } = preferences.branchParsing;
+
+    return BranchParsingService.formatMessage(messageTemplate, {
+      ticket: ticketNumber,
+      title: branchTitle,
+      message: commitMessage
+    });
   }
 
   private async initGit(): Promise<SimpleGit> {
@@ -200,9 +220,7 @@ export class GitService {
             date: commit.date,
             message: commit.message,
             branch: currentBranch,
-            formattedMessage: ticketNumber 
-              ? `${ticketNumber} | ${branchTitle} | ${commit.message}`
-              : `${branchTitle} | ${commit.message}`,
+            formattedMessage: this.formatCommitMessage(ticketNumber, branchTitle, commit.message),
             diffStats
           };
         })

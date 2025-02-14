@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,6 +17,8 @@ import {
   Slider,
 } from '@mui/material';
 import { usePreferences } from '../../context/PreferencesContext';
+import { BranchParsingSettings } from './BranchParsingSettings';
+import { preferencesService } from '../../services/preferencesService';
 
 interface GlobalPreferencesDialogProps {
   open: boolean;
@@ -47,6 +49,40 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
   onClose,
 }) => {
   const { globalPreferences, updateGlobalPreferences } = usePreferences();
+
+  useEffect(() => {
+    if (open) {
+      console.log('Dialog opened, debugging preferences...');
+      preferencesService.debugPreferences();
+    }
+  }, [open]);
+
+  // Add logging to check if preferences are loaded correctly
+  console.log('Global Preferences:', globalPreferences);
+
+  // Add null check for globalPreferences
+  if (!globalPreferences) {
+    console.error('Global preferences is null or undefined');
+    return null;
+  }
+
+  // Add null check for branchParsing
+  if (!globalPreferences.branchParsing) {
+    console.error('Branch parsing preferences is missing');
+    return (
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Error</DialogTitle>
+        <DialogContent>
+          <Typography color="error">
+            There was an error loading preferences. Please try again.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
 
   const handleEnforce8HoursChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     updateGlobalPreferences({ enforce8Hours: event.target.checked });
@@ -202,6 +238,15 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
               </Typography>
             )}
           </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <BranchParsingSettings
+            preferences={globalPreferences.branchParsing}
+            onPreferencesChange={(branchParsing) => updateGlobalPreferences({ 
+              branchParsing: { ...globalPreferences.branchParsing, ...branchParsing } 
+            })}
+          />
         </Box>
       </DialogContent>
       <DialogActions>

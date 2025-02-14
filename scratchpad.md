@@ -289,3 +289,82 @@ Return to TypeScript cleanup task:
    - [ ] RepositorySettings.tsx
    - [ ] electron/main.ts
    - [ ] PreferencesContext.tsx
+
+# Current Task: Implement Configurable Branch Parsing Patterns [COMPLETED]
+
+## Overview
+Add support for customizable regex patterns to extract ticket numbers and branch titles, with a configurable message format template.
+
+## Requirements ✓
+- [X] Single regex pattern with capture groups
+- [X] Global preferences setting
+- [X] Customizable message format template using named groups
+- [X] Preset patterns for common formats
+- [X] Live preview and validation
+
+## Implementation Plan ✓
+[X] 1. Update Types and Preferences
+    - [X] Add BranchParsingPreferences interface
+    - [X] Update PreferencesContext
+    - [X] Add default preset patterns
+
+[X] 2. Create Pattern Testing Service
+    - [X] Implement pattern validation
+    - [X] Add sample branch testing
+    - [X] Create preview generation
+
+[X] 3. Update UI Components
+    - [X] Add new section to Global Preferences Dialog
+    - [X] Create pattern selection dropdown
+    - [X] Add custom pattern input
+    - [X] Implement live preview section
+    - [X] Improve preview section height
+    - [X] Add formatted pattern description
+
+[X] 4. Modify Git Service
+    - [X] Update branch parsing logic
+    - [X] Implement new message formatting
+    - [X] Add error handling
+
+## Implemented Preset Patterns
+1. Feature/Bugfix Format
+   - feat/ABC-123-branch-title
+   - feature/ABC-123-branch-title
+   - bugfix/123-fix-issue
+
+2. Jira Style Format
+   - JIRA-123/add-new-feature
+   - PROJ-456/fix-login-issue
+   - ABC-789/update-docs
+
+3. Type/Ticket Format
+   - feature/123/add-login
+   - fix/456/resolve-bug
+   - chore/789/update-deps
+
+4. Simple Ticket Format
+   - 123-add-feature
+   - 456-fix-bug
+   - 789-update-docs
+
+## Message Template Format
+Using named groups that match regex groups:
+${ticket} | ${title} | ${message}
+
+## Progress Notes
+- Completed types and preferences setup
+- Added comprehensive branch parsing service with validation
+- Created UI components for pattern configuration
+- Added live preview with validation feedback
+- Updated Git service to use configurable patterns
+- Added fallback behavior for non-matching patterns
+- Added multiple preset patterns for different branch naming conventions
+- Improved preview section visibility
+- Feature implementation complete ✓
+
+## Improvements Made
+1. Added multiple preset patterns for different branch naming conventions
+2. Improved preview section height for better visibility
+3. Added formatted pattern descriptions with bullet points
+4. Removed custom pattern option for simplicity
+5. Added proper error handling and fallback behavior
