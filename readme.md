@@ -1,5 +1,9 @@
 # AI Harvest Timesheet
 
+[![GitHub all releases](https://img.shields.io/github/downloads/surajadsul/ai-harvest-timesheet/total?color=brightgreen&label=Downloads)](https://github.com/surajadsul/ai-harvest-timesheet/releases)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/surajadsul/ai-harvest-timesheet?label=Latest%20Release)](https://github.com/surajadsul/ai-harvest-timesheet/releases/latest)
+[![GitHub License](https://img.shields.io/github/license/surajadsul/ai-harvest-timesheet)](LICENSE)
+
 An Electron application that automates time logging in Harvest based on Git commit history. Perfect for developers who want to maintain accurate time records without manual time entry.
 
 ## Key Features
@@ -16,6 +20,45 @@ An Electron application that automates time logging in Harvest based on Git comm
 - 🕒 **Flexible Time Management**: Manual adjustments with automatic redistribution
 - 📱 **Responsive Design**: Optimized layout with proper visual hierarchy
 - 🔔 **Rich Notifications**: Clear feedback for all operations
+
+## Core Features
+
+- 🕒 **Flexible Time Distribution**
+  - Automatic hour distribution based on commit size, time, or equal distribution
+  - Manual hour adjustments with automatic redistribution
+  - Configurable daily hours enforcement (1-20 hours, default: 8)
+  - Cross-repository hour distribution support
+  - Precise hour calculations with floating-point tolerance
+  - Repository-specific hour preferences
+
+- 🔄 **Smart Git Integration**
+  - Automatic commit history processing
+  - Branch-based commit filtering
+  - Configurable date ranges
+  - Multiple repository support
+  - Customizable branch parsing patterns
+  - Ticket number extraction
+
+- 🎯 **Harvest Integration**
+  - Secure API token storage
+  - Project and task synchronization
+  - Bulk time entry creation
+  - External issue tracking support
+  - Custom notes formatting
+
+- 💾 **Data Management**
+  - Local repository settings storage
+  - Persistent user preferences
+  - Secure credential management
+  - Error-resilient storage operations
+
+- 🎨 **User Interface**
+  - Material UI with dark theme
+  - Interactive time entry preview
+  - Real-time hour validation
+  - Visual feedback for all operations
+  - Loading states and progress indicators
+  - Intuitive repository management
 
 ## Installation
 
