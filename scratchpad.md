@@ -233,3 +233,58 @@ Cleaning up remaining TypeScript issues:
    - [ ] RepositorySettings.tsx
    - [ ] electron/main.ts
    - [ ] PreferencesContext.tsx
+
+# Current Task: TimeEntryPreview Visual Improvements
+
+## Overview
+Enhance the visual appeal of the TimeEntryPreview component without adding new functionality.
+
+## Planned Changes
+
+### 1. Icon Additions
+- Repository Section:
+  [X] Add `FolderIcon` before repository names
+
+- Time/Date Elements:
+  [X] Add `CalendarTodayIcon` for DateRangeSelector
+  [X] Add `AccessTimeIcon` for hour displays
+  [X] Add `SyncIcon` for the sync button
+
+- Commit Information:
+  [X] Add `CodeIcon` for branch information
+
+### 2. Spacing and Layout
+[X] Adjust padding between list items
+[X] Add subtle dividers between repository sections
+[X] Improve spacing around date selector
+[X] Enhance button margins and padding
+
+### 3. Typography and Colors
+[X] Use more distinct typography for dates
+[X] Enhance commit message readability
+[X] Improve hour display prominence
+[X] Use consistent color scheme from theme
+
+### 4. Visual Feedback
+[X] Add subtle hover effects on interactive elements
+[X] Improve focus states for accessibility
+[X] Add transition effects for existing interactions
+
+## Progress Update
+1. Completed Initial Phase:
+   - Added essential icons (FolderIcon, AccessTimeIcon, CodeIcon)
+   - Implemented improved layout with proper spacing and dividers
+   - Enhanced typography and colors for better readability
+   - Added hover effects and visual feedback
+
+2. Current Status:
+   - Core visual improvements are in place
+   - Icons are using appropriate colors from theme
+   - Layout is more organized and visually appealing
+   - Typography is more readable with proper hierarchy
+
+## Notes
+- All changes maintain existing functionality
+- Using Material Design principles
+- Following theme variables
+- Responsive design maintained
