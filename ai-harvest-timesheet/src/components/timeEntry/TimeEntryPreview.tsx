@@ -607,22 +607,22 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                     <Box 
                       sx={{ 
                         bgcolor: 'background.default',
-                        p: 2,
+                        p: 1.5,
                         borderBottom: 1,
                         borderColor: 'divider'
                       }}
                     >
-                      <Typography variant="h6" sx={{ mb: 0.5 }}>
+                      <Typography variant="subtitle1" sx={{ mb: 0.5, fontWeight: 500, color: 'text.primary' }}>
                         {format(parseISO(date), 'EEEE, MMMM dd, yyyy')}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                           {totalDayCommits} commit{totalDayCommits === 1 ? '' : 's'}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                           •
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                           Total: {totalDayHours.toFixed(2)} hours
                         </Typography>
                         {Object.keys(dateCommits).some(repoPath => {
@@ -631,10 +631,10 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                           return preferences?.enforce8Hours && preferences?.distributeAcrossRepositories;
                         }) && totalDayHours > 8 && (
                           <>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               •
                             </Typography>
-                            <Typography variant="body2" color="error">
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'error.light' }}>
                               Exceeds 8-hour limit
                             </Typography>
                           </>
@@ -650,7 +650,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                       return (
                         <Box key={`${date}-${repoPath}`}>
                           <Box sx={{ 
-                            p: 1.5, 
+                            p: 1.25, 
                             pl: 3,
                             display: 'flex',
                             alignItems: 'center',
@@ -659,24 +659,24 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                             borderColor: 'divider',
                             bgcolor: 'background.paper'
                           }}>
-                            <FolderIcon color="action" />
-                            <Typography variant="subtitle1">
+                            <FolderIcon sx={{ fontSize: '1.2rem', color: 'text.secondary' }} />
+                            <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.primary' }}>
                               {repoPath.split('/').pop()}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               •
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               {repoCommits.length} commit{repoCommits.length === 1 ? '' : 's'}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               •
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               {totalRepoHours.toFixed(2)} hours
                             </Typography>
                             {!preferences?.distributeAcrossRepositories && preferences?.enforce8Hours && totalRepoHours > 8 && (
-                              <Typography variant="body2" color="error">
+                              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'error.light' }}>
                                 (Exceeds 8-hour limit)
                               </Typography>
                             )}
@@ -697,7 +697,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                                   display: 'grid',
                                   gridTemplateColumns: '1fr auto',
                                   gap: 2,
-                                  p: 2,
+                                  p: 1.5,
                                   pl: 3,
                                   borderBottom: 1,
                                   borderColor: 'divider',
@@ -707,31 +707,29 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                                 }}
                               >
                                 <Box>
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
                                     <AccessTimeIcon 
-                                      fontSize="small"
-                                      sx={{ color: 'primary.light' }}
+                                      sx={{ fontSize: '1rem', color: 'primary.light' }}
                                     />
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                                       {format(parseISO(commit.date), 'h:mm a')}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                                       •
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                                       {formatDistanceToNow(parseISO(commit.date), { addSuffix: true })}
                                     </Typography>
                                   </Box>
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
                                     <CodeIcon 
-                                      fontSize="small"
-                                      sx={{ color: 'info.main' }}
+                                      sx={{ fontSize: '1rem', color: 'info.light' }}
                                     />
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                                       {commit.branch}
                                     </Typography>
                                   </Box>
-                                  <Typography variant="body1">
+                                  <Typography variant="body2" sx={{ fontSize: '0.875rem', color: 'text.primary' }}>
                                     {commit.formattedMessage}
                                   </Typography>
                                 </Box>
