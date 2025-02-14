@@ -363,6 +363,14 @@ export class DistributionService {
       console.warn('Invalid maximum hours, defaulting to 4');
       preferences.maximumCommitHours = 4;
     }
+    if (!preferences.customHoursValue || isNaN(preferences.customHoursValue)) {
+      console.warn('Invalid custom daily hours, defaulting to 8');
+      preferences.customHoursValue = 8;
+    }
+    if (preferences.customHoursValue < 1 || preferences.customHoursValue > 20) {
+      console.warn('Custom daily hours out of range (1-20), defaulting to 8');
+      preferences.customHoursValue = 8;
+    }
 
     let weights: number[];
     console.log('Calculating weights with strategy:', preferences.distributionStrategy);
@@ -559,6 +567,8 @@ export class DistributionService {
     // Example preferences
     const preferences: TimePreferences = {
       enforce8Hours: true,
+      customEnforceHours: false,
+      customHoursValue: 8,
       autoRedistributeHours: true,
       distributeAcrossRepositories: false,
       distributionStrategy: 'commit-size',

@@ -150,6 +150,10 @@
   - Improved layout and spacing
   - Added consistent loading states
   - Enhanced error message presentation
+- Added floating-point comparison tolerance to fix issues with hour limit validation
+  - Implemented a small tolerance (0.001 hours) to prevent false positives in hour comparisons
+  - Fixed the "Exceeds limit" warning showing incorrectly when hours exactly match the limit
+  - Applied consistent comparison logic across all hour validations
 
 ## Upcoming Tasks
 - Set up testing environment

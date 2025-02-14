@@ -241,6 +241,17 @@ Data persistence error handling has been implemented with comprehensive error ty
    - Log errors for debugging
    - Use type-safe storage operations
 
+## Floating-Point Comparisons
+When comparing floating-point numbers (like hours in time tracking), it's important to use a small tolerance value (epsilon) rather than direct equality comparison. This helps avoid issues with floating-point precision in JavaScript. For example, when comparing if total hours exceed a limit:
+
+```typescript
+const HOURS_COMPARISON_TOLERANCE = 0.001; // 3.6 seconds tolerance
+// Instead of: if (totalHours > limit)
+if ((totalHours - limit) > HOURS_COMPARISON_TOLERANCE)
+```
+
+This prevents false positives when values are technically equal but differ by tiny amounts due to floating-point arithmetic.
+
 # Current Focus
 Cleaning up remaining TypeScript issues:
 1. ✓ Fixed missing extractTicketNumber property

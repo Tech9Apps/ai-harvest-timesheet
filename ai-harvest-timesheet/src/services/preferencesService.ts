@@ -8,6 +8,8 @@ const STORAGE_KEYS = {
 
 const DEFAULT_GLOBAL_PREFERENCES: GlobalPreferences = {
   enforce8Hours: true,
+  customEnforceHours: true,
+  customHoursValue: 8,
   autoRedistributeHours: true,
   distributeAcrossRepositories: false,
   distributionStrategy: 'commit-size',
@@ -26,6 +28,8 @@ const DEFAULT_GLOBAL_PREFERENCES: GlobalPreferences = {
 
 const DEFAULT_REPOSITORY_PREFERENCES: RepositoryPreferences = {
   enforce8Hours: true,
+  customEnforceHours: true,
+  customHoursValue: 8,
   autoRedistributeHours: true,
   distributeAcrossRepositories: false,
   distributionStrategy: 'commit-size',

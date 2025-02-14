@@ -94,6 +94,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [pendingRefresh, setPendingRefresh] = useState<{ startDate?: Date; endDate?: Date } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const HOURS_COMPARISON_TOLERANCE = 0.001; // 3.6 seconds tolerance
 
   useEffect(() => {
     // Process commits when they change
@@ -115,13 +116,13 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
             newProcessedCommits[repoPath] = [];
           }
           newProcessedCommits[repoPath].push(...repoCommits);
-        } else if (preferences.enforce8Hours) {
+        } else if (preferences.customEnforceHours) {
           if (preferences.distributeAcrossRepositories) {
             // Get all commits for this day across repositories
             const allDayCommits = Object.values(dateCommits).flat();
             const distribution = DistributionService.distributeHours(
               allDayCommits,
-              8,
+              preferences.customHoursValue,
               preferences
             );
 
@@ -136,10 +137,10 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
             }
             newProcessedCommits[repoPath].push(...processedCommits);
           } else {
-            // Distribute 8 hours within this repository only
+            // Distribute custom daily hours within this repository only
             const distribution = DistributionService.distributeHours(
               repoCommits,
-              8,
+              preferences.customHoursValue,
               preferences
             );
 
@@ -154,7 +155,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
             newProcessedCommits[repoPath].push(...processedCommits);
           }
         } else {
-          // If 8-hour enforcement is disabled, set hours to 0 for manual adjustment
+          // If daily hours enforcement is disabled, set hours to 0 for manual adjustment
           const processedCommits = repoCommits.map(commit => ({
             ...commit,
             hours: 0,
@@ -179,7 +180,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     };
 
     const preferences = getEffectivePreferences(repository.path);
-    if (!preferences.enforce8Hours) return { isValid: true };
+    if (!preferences.customEnforceHours) return { isValid: true };
 
     // Get the date of the commit being validated
     const commitDate = format(parseISO(currentCommit.date), 'yyyy-MM-dd');
@@ -187,7 +188,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     const dateCommits = commitsByDate[commitDate] || {};
 
     if (preferences.distributeAcrossRepositories) {
-      // Calculate total hours for this day across all repositories
+      // When cross-repository distribution is enabled, only validate total hours across all repositories
       const totalHours = Object.entries(dateCommits).reduce((sum, [path, commits]) => {
         const repoSum = commits.reduce((repoSum, commit) => 
           repoSum + (commit.hash === currentCommit.hash ? newHours : (commit.hours ?? 0)), 
@@ -197,13 +198,13 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
       }, 0);
 
       return {
-        isValid: totalHours <= 8,
-        message: totalHours > 8 
-          ? `Total hours for ${format(parseISO(commitDate), 'MMM dd, yyyy')} (${totalHours.toFixed(2)}) exceed the 8-hour daily limit by ${(totalHours - 8).toFixed(2)} hours`
+        isValid: (totalHours - preferences.customHoursValue) <= HOURS_COMPARISON_TOLERANCE,
+        message: (totalHours - preferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE
+          ? `Total hours for ${format(parseISO(commitDate), 'MMM dd, yyyy')} (${totalHours.toFixed(2)}) exceed the ${preferences.customHoursValue}-hour daily limit by ${(totalHours - preferences.customHoursValue).toFixed(2)} hours`
           : undefined
       };
     } else {
-      // Validate hours only for current repository (regardless of date)
+      // Only validate individual repository hours when cross-repository distribution is disabled
       const repoCommits = processedCommits[repoPath] || [];
       const totalHours = repoCommits.reduce((sum, commit) => 
         sum + (commit.hash === currentCommit.hash ? newHours : (commit.hours ?? 0)), 
@@ -211,9 +212,9 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
       );
 
       return {
-        isValid: totalHours <= 8,
-        message: totalHours > 8 
-          ? `Total hours for repository (${totalHours.toFixed(2)}) exceed the 8-hour limit by ${(totalHours - 8).toFixed(2)} hours`
+        isValid: (totalHours - preferences.customHoursValue) <= HOURS_COMPARISON_TOLERANCE,
+        message: (totalHours - preferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE
+          ? `Total hours for repository (${totalHours.toFixed(2)}) exceed the ${preferences.customHoursValue}-hour limit by ${(totalHours - preferences.customHoursValue).toFixed(2)} hours`
           : undefined
       };
     }
@@ -227,7 +228,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     if (!preferences.autoRedistributeHours) return;
 
     const date = adjustedCommit.date;
-    const remainingHours = 8 - newHours;
+    const remainingHours = preferences.customHoursValue - newHours;
 
     if (preferences.distributeAcrossRepositories) {
       // Get all commits for this day across repositories
@@ -334,7 +335,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     setSuccess(null);
 
     // Show appropriate success message
-    if (preferences.enforce8Hours) {
+    if (preferences.customEnforceHours) {
       if (preferences.distributeAcrossRepositories) {
         const commitDate = format(parseISO(commit.date), 'yyyy-MM-dd');
         const commitsByDate = groupCommitsByDate(processedCommits);
@@ -343,18 +344,18 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
           sum + commits.reduce((repoSum, commit) => repoSum + (commit.hours ?? 0), 0),
           0
         );
-        setSuccess(`Updated to ${newHours.toFixed(2)} hours (${(8 - totalHours).toFixed(2)} hours remaining for the day across all repositories)`);
+        setSuccess(`Updated to ${newHours.toFixed(2)} hours (${(preferences.customHoursValue - totalHours).toFixed(2)} hours remaining for the day across all repositories)`);
       } else {
         const repoCommits = processedCommits[repoPath] || [];
         const totalHours = repoCommits.reduce((sum, c) => sum + (c.hours ?? 0), 0);
-        setSuccess(`Updated to ${newHours.toFixed(2)} hours (${(8 - totalHours).toFixed(2)} hours remaining for the repository)`);
+        setSuccess(`Updated to ${newHours.toFixed(2)} hours (${(preferences.customHoursValue - totalHours).toFixed(2)} hours remaining for the repository)`);
       }
     } else {
       setSuccess(`Updated to ${newHours.toFixed(2)} hours`);
     }
 
     // Redistribute hours if needed
-    if (preferences.enforce8Hours && preferences.autoRedistributeHours) {
+    if (preferences.autoRedistributeHours) {
       redistributeHours(repoPath, commit, newHours);
     }
   };
@@ -457,29 +458,19 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
 
     // Validate all entries before syncing
     for (const [date, dateCommits] of Object.entries(commitsByDate)) {
-      // Check if any repository for this day has cross-repository distribution enabled
-      const hasCrossRepoDistribution = Object.keys(dateCommits).some(repoPath => {
-        const repository = repositories.find(repo => repo.path === repoPath);
-        return repository && getEffectivePreferences(repository.path).distributeAcrossRepositories;
-      });
-
-      if (hasCrossRepoDistribution) {
-        // Validate total hours across all repositories for this day
-        const totalDayHours = Object.values(dateCommits).reduce((sum, commits) => 
-          sum + commits.reduce((repoSum, commit) => repoSum + (commit.hours ?? 0), 0),
-          0
-        );
-        
-        if (totalDayHours > 8) {
+      // Check for zero or negative hours first
+      for (const [repoPath, repoCommits] of Object.entries(dateCommits)) {
+        const invalidCommit = repoCommits.find(commit => !commit.hours || commit.hours <= 0);
+        if (invalidCommit) {
+          const repository = repositories.find(repo => repo.path === repoPath);
           setError(
-            `Unable to sync: Total hours for ${format(parseISO(date), 'MMM dd, yyyy')} ` +
-            `(${totalDayHours.toFixed(2)}) exceed the 8-hour daily limit`
+            `Unable to sync: Invalid hours (${invalidCommit.hours}) found for commit in ${repository?.path.split('/').pop() ?? repoPath}`
           );
           return;
         }
       }
 
-      // Validate each repository separately
+      // Validate each repository's hours
       for (const [repoPath, repoCommits] of Object.entries(dateCommits)) {
         const repository = repositories.find(repo => repo.path === repoPath);
         if (!repository) {
@@ -488,26 +479,15 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
         }
 
         const preferences = getEffectivePreferences(repository.path);
-        if (preferences.enforce8Hours) {
+        if (preferences.customEnforceHours) {
           const totalRepoHours = repoCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
-          if (totalRepoHours > 8) {
+          if ((totalRepoHours - preferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE) {
             setError(
               `Unable to sync: Total hours for ${repository.path.split('/').pop()} ` +
-              `(${totalRepoHours.toFixed(2)}) exceed the 8-hour limit`
+              `(${totalRepoHours.toFixed(2)}) exceed the ${preferences.customHoursValue}-hour limit`
             );
             return;
           }
-        }
-      }
-
-      // Check for zero or negative hours
-      for (const [repoPath, repoCommits] of Object.entries(dateCommits)) {
-        const invalidCommit = repoCommits.find(commit => !commit.hours || commit.hours <= 0);
-        if (invalidCommit) {
-          setError(
-            `Unable to sync: Invalid hours (${invalidCommit.hours}) found for commit in ${repoPath.split('/').pop()}`
-          );
-          return;
         }
       }
     }
@@ -630,11 +610,17 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
               .map(([date, dateCommits]) => {
                 const totalDayCommits = Object.values(dateCommits)
                   .reduce((sum, commits) => sum + commits.length, 0);
-                const totalDayHours = Object.values(dateCommits)
-                  .reduce((sum, commits) => 
-                    sum + commits.reduce((repoSum, commit) => repoSum + (commit.hours ?? 0), 0), 
-                    0
-                  );
+                const totalDayHours = Object.values(dateCommits).reduce((sum, commits) => 
+                  sum + commits.reduce((repoSum, commit) => repoSum + (commit.hours ?? 0), 0),
+                  0
+                );
+
+                // Get preferences from any enabled repository for this day
+                const anyEnabledRepo = Object.keys(dateCommits)
+                  .find(repoPath => repositories.find(repo => repo.path === repoPath)?.enabled);
+                const dayPreferences = anyEnabledRepo ? 
+                  getEffectivePreferences(anyEnabledRepo) : 
+                  null;
 
                 return (
                   <Box key={date} sx={{ mb: 2 }}>
@@ -659,17 +645,14 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                         <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                           Total: {totalDayHours.toFixed(2)} hours
                         </Typography>
-                        {Object.keys(dateCommits).some(repoPath => {
-                          const repository = repositories.find(repo => repo.path === repoPath);
-                          const preferences = repository ? getEffectivePreferences(repository.path) : null;
-                          return preferences?.enforce8Hours && preferences?.distributeAcrossRepositories;
-                        }) && totalDayHours > 8 && (
+                        {dayPreferences?.customEnforceHours && 
+                          (totalDayHours - dayPreferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE && (
                           <>
                             <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               •
                             </Typography>
                             <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'error.light' }}>
-                              Exceeds 8-hour limit
+                              Exceeds {dayPreferences.customHoursValue}-hour limit
                             </Typography>
                           </>
                         )}
@@ -709,9 +692,11 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                             <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               {totalRepoHours.toFixed(2)} hours
                             </Typography>
-                            {!preferences?.distributeAcrossRepositories && preferences?.enforce8Hours && totalRepoHours > 8 && (
+                            {!preferences?.distributeAcrossRepositories && 
+                              preferences?.customEnforceHours && 
+                              (totalRepoHours - preferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE && (
                               <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'error.light' }}>
-                                (Exceeds 8-hour limit)
+                                (Exceeds {preferences.customHoursValue}-hour limit)
                               </Typography>
                             )}
                           </Box>

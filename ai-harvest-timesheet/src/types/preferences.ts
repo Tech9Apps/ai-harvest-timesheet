@@ -1,5 +1,7 @@
 export interface TimePreferences {
   enforce8Hours: boolean;
+  customEnforceHours: boolean;
+  customHoursValue: number;
   autoRedistributeHours: boolean;
   distributeAcrossRepositories: boolean;
   distributionStrategy: 'equal' | 'commit-size' | 'time-based' | 'impact-analysis';
