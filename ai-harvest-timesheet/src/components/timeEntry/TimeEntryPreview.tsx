@@ -546,7 +546,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
             variant="outlined" 
             onClick={() => handleRefreshClick(startDate, endDate)}
             disabled={isRefreshing}
-            startIcon={isRefreshing ? <CircularProgress size={20} /> : undefined}
+            startIcon={isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
           >
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
@@ -554,6 +554,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
             variant="contained"
             onClick={handleSync}
             disabled={Object.keys(processedCommits).length === 0 || isLoading}
+            startIcon={<SyncIcon />}
           >
             Sync to Harvest
           </Button>
