@@ -1,5 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, List, ListItem, ListItemText, Button, Snackbar, Alert, CircularProgress, Backdrop, Skeleton } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  Button, 
+  Snackbar, 
+  Alert, 
+  CircularProgress, 
+  Backdrop, 
+  Skeleton,
+  Divider,
+  Stack,
+  ListItemIcon
+} from '@mui/material';
+import { 
+  Folder as FolderIcon,
+  AccessTime as AccessTimeIcon,
+  Sync as SyncIcon,
+  CalendarToday as CalendarTodayIcon,
+  Code as CodeIcon,
+  Refresh as RefreshIcon,
+  Upload as UploadIcon
+} from '@mui/icons-material';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { Repository, TimeEntry, CommitInfo } from '../../types';
 import { useLoading } from '../../context/LoadingContext';
@@ -565,7 +590,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
             ))}
           </List>
         ) : (
-          <List>
+          <List sx={{ p: 0 }}>
             {Object.entries(groupCommitsByDate(processedCommits))
               .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
               .map(([date, dateCommits]) => {
@@ -578,58 +603,85 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                   );
 
                 return (
-                  <React.Fragment key={date}>
-                    <ListItem>
-                      <ListItemText
-                        primary={
-                          <Typography variant="subtitle1">
-                            {format(parseISO(date), 'EEEE, MMMM dd, yyyy')}
-                          </Typography>
-                        }
-                        secondary={
-                          <Box>
-                            <Typography variant="body2">
-                              {totalDayCommits} commit{totalDayCommits === 1 ? '' : 's'}
-                              {' - '}
-                              Total: {totalDayHours.toFixed(2)} hours
+                  <Box key={date} sx={{ mb: 2 }}>
+                    <Box 
+                      sx={{ 
+                        bgcolor: 'background.default',
+                        p: 2,
+                        borderBottom: 1,
+                        borderColor: 'divider'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 0.5 }}>
+                        {format(parseISO(date), 'EEEE, MMMM dd, yyyy')}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          {totalDayCommits} commit{totalDayCommits === 1 ? '' : 's'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          •
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Total: {totalDayHours.toFixed(2)} hours
+                        </Typography>
+                        {Object.keys(dateCommits).some(repoPath => {
+                          const repository = repositories.find(repo => repo.path === repoPath);
+                          const preferences = repository ? getEffectivePreferences(repository.path) : null;
+                          return preferences?.enforce8Hours && preferences?.distributeAcrossRepositories;
+                        }) && totalDayHours > 8 && (
+                          <>
+                            <Typography variant="body2" color="text.secondary">
+                              •
                             </Typography>
-                            {Object.keys(dateCommits).some(repoPath => {
-                              const repository = repositories.find(repo => repo.path === repoPath);
-                              const preferences = repository ? getEffectivePreferences(repository.path) : null;
-                              return preferences?.enforce8Hours && preferences?.distributeAcrossRepositories;
-                            }) && totalDayHours > 8 && (
-                              <Typography variant="body2" color="error">
-                                Warning: Total hours exceed 8-hour daily limit across all repositories
-                              </Typography>
-                            )}
-                          </Box>
-                        }
-                      />
-                    </ListItem>
+                            <Typography variant="body2" color="error">
+                              Exceeds 8-hour limit
+                            </Typography>
+                          </>
+                        )}
+                      </Box>
+                    </Box>
+
                     {Object.entries(dateCommits).map(([repoPath, repoCommits]) => {
                       const repository = repositories.find(repo => repo.path === repoPath);
                       const preferences = repository ? getEffectivePreferences(repository.path) : null;
                       const totalRepoHours = repoCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
                       
                       return (
-                        <React.Fragment key={`${date}-${repoPath}`}>
-                          <ListItem sx={{ pl: 4 }}>
-                            <ListItemText
-                              primary={repoPath.split('/').pop()}
-                              secondary={
-                                <Box>
-                                  <Typography variant="body2">
-                                    {repoCommits.length} commit{repoCommits.length === 1 ? '' : 's'} - Total: {totalRepoHours.toFixed(2)} hours
-                                  </Typography>
-                                  {!preferences?.distributeAcrossRepositories && preferences?.enforce8Hours && totalRepoHours > 8 && (
-                                    <Typography variant="body2" color="error">
-                                      Warning: Repository hours exceed 8-hour limit
-                                    </Typography>
-                                  )}
-                                </Box>
-                              }
-                            />
-                          </ListItem>
+                        <Box key={`${date}-${repoPath}`}>
+                          <Box sx={{ 
+                            p: 1.5, 
+                            pl: 3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                            borderBottom: 1,
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper'
+                          }}>
+                            <FolderIcon color="action" />
+                            <Typography variant="subtitle1">
+                              {repoPath.split('/').pop()}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              •
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {repoCommits.length} commit{repoCommits.length === 1 ? '' : 's'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              •
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {totalRepoHours.toFixed(2)} hours
+                            </Typography>
+                            {!preferences?.distributeAcrossRepositories && preferences?.enforce8Hours && totalRepoHours > 8 && (
+                              <Typography variant="body2" color="error">
+                                (Exceeds 8-hour limit)
+                              </Typography>
+                            )}
+                          </Box>
+
                           {repoCommits.map((commit) => {
                             const isManuallySet = manualAdjustments.some(
                               adj => adj.repoPath === repoPath && adj.commitHash === commit.hash
@@ -639,41 +691,71 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                             );
 
                             return (
-                              <ListItem key={commit.hash} sx={{ pl: 8 }}>
-                                <ListItemText
-                                  primary={
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                      <Typography variant="subtitle2">
-                                        {format(parseISO(commit.date), 'h:mm a')} ({formatDistanceToNow(parseISO(commit.date), { addSuffix: true })})
-                                      </Typography>
-                                      <HourEditor
-                                        hours={commit.hours ?? 0}
-                                        originalHours={adjustment?.originalHours}
-                                        isManuallySet={isManuallySet}
-                                        onHourChange={(hours) => handleHourChange(repoPath, commit, hours)}
-                                        onReset={() => handleResetHours(repoPath, commit)}
-                                        validate={(hours) => validateHours(repoPath, hours, commit)}
-                                      />
-                                    </Box>
+                              <Box 
+                                key={commit.hash} 
+                                sx={{ 
+                                  display: 'grid',
+                                  gridTemplateColumns: '1fr auto',
+                                  gap: 2,
+                                  p: 2,
+                                  pl: 3,
+                                  borderBottom: 1,
+                                  borderColor: 'divider',
+                                  '&:hover': {
+                                    bgcolor: 'action.hover'
                                   }
-                                  secondary={
-                                    <Box>
-                                      <Typography variant="body2" color="text.secondary">
-                                        Branch: {commit.branch}
-                                      </Typography>
-                                      <Typography variant="body2">
-                                        {commit.formattedMessage}
-                                      </Typography>
-                                    </Box>
-                                  }
-                                />
-                              </ListItem>
+                                }}
+                              >
+                                <Box>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                    <AccessTimeIcon 
+                                      fontSize="small"
+                                      sx={{ color: 'primary.light' }}
+                                    />
+                                    <Typography variant="body2" color="text.secondary">
+                                      {format(parseISO(commit.date), 'h:mm a')}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      •
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      {formatDistanceToNow(parseISO(commit.date), { addSuffix: true })}
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                    <CodeIcon 
+                                      fontSize="small"
+                                      sx={{ color: 'info.main' }}
+                                    />
+                                    <Typography variant="body2" color="text.secondary">
+                                      {commit.branch}
+                                    </Typography>
+                                  </Box>
+                                  <Typography variant="body1">
+                                    {commit.formattedMessage}
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ 
+                                  display: 'flex',
+                                  alignItems: 'flex-start',
+                                  justifyContent: 'flex-end'
+                                }}>
+                                  <HourEditor
+                                    hours={commit.hours ?? 0}
+                                    originalHours={adjustment?.originalHours}
+                                    isManuallySet={isManuallySet}
+                                    onHourChange={(hours) => handleHourChange(repoPath, commit, hours)}
+                                    onReset={() => handleResetHours(repoPath, commit)}
+                                    validate={(hours) => validateHours(repoPath, hours, commit)}
+                                  />
+                                </Box>
+                              </Box>
                             );
                           })}
-                        </React.Fragment>
+                        </Box>
                       );
                     })}
-                  </React.Fragment>
+                  </Box>
                 );
               })}
           </List>
