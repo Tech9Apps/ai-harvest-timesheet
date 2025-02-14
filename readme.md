@@ -5,11 +5,17 @@ An Electron application that automates time logging in Harvest based on Git comm
 ## Key Features
 
 - 🔄 **Automatic Time Tracking**: Convert Git commits to Harvest time entries
-- 📊 **Smart Hour Distribution**: Automatically distribute hours across commits
-- 🎯 **Repository Management**: Enable/disable repositories without losing settings
-- 🔗 **Harvest Integration**: Direct sync with your Harvest projects
-- 🎨 **Modern UI**: Dark theme with Material Design
-- 🔧 **Customizable**: Webhook support for message formatting
+- 📊 **Smart Hour Distribution**: Intelligent hour allocation across commits
+- 🎯 **Repository Management**: Enable/disable repositories with persistent settings
+- 🔗 **Harvest Integration**: Seamless sync with Harvest projects and tasks
+- 🎨 **Modern UI**: Material Design with dark theme and intuitive layout
+- 🔧 **Customizable**: Flexible webhook support for message formatting
+- 🔍 **Branch Pattern Recognition**: Smart branch parsing with preset patterns
+- ⚙️ **Advanced Preferences**: Organized settings with tabbed interface
+- 🛡️ **Enhanced Error Handling**: Robust error recovery and clear feedback
+- 🕒 **Flexible Time Management**: Manual adjustments with automatic redistribution
+- 📱 **Responsive Design**: Optimized layout with proper visual hierarchy
+- 🔔 **Rich Notifications**: Clear feedback for all operations
 
 ## Installation
 
@@ -27,9 +33,14 @@ For detailed installation instructions, see our [Installation Guide](docs/instal
    - Get them from [Harvest Developer Tools](https://id.getharvest.com/developers)
    - Create a new Personal Access Token
    - Note down your Account ID and Token
+3. Configure global preferences (optional)
+   - Set default working hours
+   - Choose branch parsing pattern
+   - Configure distribution settings
 
-### 2. Adding Repositories
+### 2. Repository Management
 
+#### Adding Repositories
 1. Click "Add Repository"
 2. Enter the full path to your Git repository
 3. Click "Add"
@@ -37,52 +48,85 @@ For detailed installation instructions, see our [Installation Guide](docs/instal
    - Select Harvest project
    - Select task
    - Optional: Configure webhook URL
+   - Optional: Set repository-specific preferences
 
-### 3. Managing Repositories
+#### Managing Repositories
+- **Enable/Disable**: Toggle switch for repository activity
+- **Settings**: Configure repository-specific options
+- **Remove**: Delete repository from application
 
-- **Enable/Disable**: Use the toggle switch to control repository activity
-- **Settings**: Click the ⚙️ icon to modify repository settings
-- **Remove**: Click the 🗑️ icon to remove a repository
+#### Visual Indicators
+- 🟢 Enabled: Full opacity, active border
+- ⚫ Disabled: Grayed out, inactive border
+- ✓ Configured: Settings complete indicator
+- ⚠️ Warning: Configuration issues
+- ❌ Error: Connection/access problems
 
-Visual Indicators:
-- 🟢 Enabled repositories: Full opacity, green border
-- ⚫ Disabled repositories: Grayed out, disabled border
-- ✓ Configured repositories: Green checkmark when Harvest settings are complete
+### 3. Time Entry Management
 
-### 4. Time Entry Preview
+#### Date Selection
+- Quick selections:
+  - Today (default)
+  - Yesterday
+  - Custom range
+- Date validation and constraints
+- Visual calendar interface
 
-1. Select date range:
-   - Today (default)
-   - Custom date range
-2. Review commits and calculated hours
-3. Adjust hours if needed:
-   - Click on hours to edit
-   - Hours are automatically redistributed
-   - Manual adjustments are highlighted
+#### Time Entry Preview
+- Commit details with formatted messages
+- Branch information with ticket numbers
+- Editable hour allocations
+- Total hours display
+- Distribution indicators
+- Loading states for operations
 
-### 5. Syncing to Harvest
-
-1. Review time entries
-2. Click "Sync to Harvest"
-3. Confirm the sync
-4. Wait for completion notification
-
-### 6. Global Preferences
-
-Access via "Time Preferences" button:
-- Enforce 8-hour day
-- Auto-redistribute hours
+#### Hour Management
+- Manual hour adjustments
+- Automatic redistribution
 - Cross-repository distribution
+- Hour constraints enforcement
+- Visual feedback for changes
+
+### 4. Global Preferences
+
+Access via "Preferences" button in three organized sections:
+
+#### General Settings
+- Default working hours
+- Auto-redistribution options
+- Cross-repository settings
+- UI preferences
+- Notification settings
+
+#### Branch Parsing Settings
+- Preset patterns available:
+  1. Feature/Bugfix: `feat/ABC-123-branch-title`
+  2. Jira Style: `JIRA-123/add-new-feature`
+  3. Type/Ticket: `feature/123/add-login`
+  4. Simple Ticket: `123-add-feature`
+- Live pattern preview
+- Message template customization
+- Fallback behavior configuration
+
+#### Distribution Settings
+- Hour distribution logic
+- Default daily hours
+- Cross-repository options
+- Rounding preferences
+- Minimum time allocations
 
 ## Advanced Features
 
 ### Webhook Integration
 
-The webhook integration allows you to customize commit message formatting and specify custom hours for commits. This is useful for:
-- Integrating with ticket systems
-- Formatting commit messages according to your team's standards
-- Setting specific hours for commits based on external data
-- Automating time allocation based on commit metadata
+Customize commit processing with webhook integration:
+
+#### Capabilities
+- Custom message formatting
+- Dynamic hour allocation
+- Ticket system integration
+- Metadata processing
+- Error handling and fallbacks
 
 #### Webhook Configuration
 1. In repository settings, provide a webhook URL
@@ -150,30 +194,91 @@ The webhook integration allows you to customize commit message formatting and sp
    - Add project prefixes
    - Include additional context from external systems
 
-### Hour Distribution Logic
+### Branch Pattern Recognition
 
-- **Standard Mode**: Hours divided equally among commits
-- **Cross-Repository Mode**: Hours distributed across all repositories
-- **Manual Adjustments**: Preserved during redistribution
+Intelligent branch parsing system:
+
+#### Pattern Features
+- Automatic ticket extraction
+- Multiple format support
+- Template customization
+- Live preview validation
+- Error handling
+- Fallback processing
+
+#### Supported Formats
+1. **Feature/Bugfix Format**
+   - `feat/ABC-123-branch-title`
+   - `feature/ABC-123-branch-title`
+   - `bugfix/123-fix-issue`
+
+2. **Jira Style Format**
+   - `JIRA-123/add-new-feature`
+   - `PROJ-456/fix-login-issue`
+   - `ABC-789/update-docs`
+
+3. **Type/Ticket Format**
+   - `feature/123/add-login`
+   - `fix/456/resolve-bug`
+   - `chore/789/update-deps`
+
+4. **Simple Ticket Format**
+   - `123-add-feature`
+   - `456-fix-bug`
+   - `789-update-docs`
+
+### Error Handling System
+
+Comprehensive error management:
+
+#### Storage Operations
+- Availability verification
+- Quota management
+- Data recovery
+- Fallback values
+- Error reporting
+
+#### Network Operations
+- Connection management
+- Timeout handling
+- Retry logic
+- Offline support
+- Status reporting
+
+#### User Interactions
+- Input validation
+- Error feedback
+- Recovery guidance
+- Constraint enforcement
+- Status notifications
 
 ## Troubleshooting
 
 Common issues and solutions:
 
-1. **Repository Not Found**
-   - Ensure the path is correct
-   - Check repository permissions
-   - Verify Git installation
+1. **Repository Issues**
+   - Invalid path: Verify full repository path
+   - Access denied: Check file permissions
+   - Git errors: Verify Git installation
+   - Branch errors: Check branch name format
 
-2. **Harvest Sync Failed**
-   - Check your internet connection
-   - Verify Harvest credentials
-   - Ensure project/task selections are valid
+2. **Harvest Integration**
+   - Authentication: Verify credentials
+   - Project access: Check project permissions
+   - Task selection: Verify task availability
+   - Sync failures: Check network connection
 
-3. **No Commits Showing**
-   - Check if repository is enabled
-   - Verify date range
-   - Ensure commits exist for the selected period
+3. **Time Entry Issues**
+   - Missing commits: Check repository status
+   - Hour distribution: Verify preferences
+   - Sync errors: Check Harvest connection
+   - Pattern matching: Verify branch format
+
+4. **Performance Issues**
+   - Slow loading: Check repository size
+   - UI lag: Reduce date range
+   - Memory usage: Close unused repositories
+   - Network delays: Check connection speed
 
 ## Contributing
 
