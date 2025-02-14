@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, List, ListItem, ListItemText, Button, Snackbar, Alert, CircularProgress, Backdrop, Skeleton } from '@mui/material';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { Repository, TimeEntry, CommitInfo } from '../../types';
 import { useLoading } from '../../context/LoadingContext';
 import { usePreferences } from '../../context/PreferencesContext';
@@ -644,7 +644,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                                   primary={
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                       <Typography variant="subtitle2">
-                                        {format(parseISO(commit.date), 'HH:mm')}
+                                        {format(parseISO(commit.date), 'h:mm a')} ({formatDistanceToNow(parseISO(commit.date), { addSuffix: true })})
                                       </Typography>
                                       <HourEditor
                                         hours={commit.hours ?? 0}

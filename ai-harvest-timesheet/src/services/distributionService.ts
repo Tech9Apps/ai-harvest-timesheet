@@ -1,5 +1,11 @@
 import { CommitInfo } from '../types';
 import { TimePreferences } from '../types/preferences';
+import { format, parseISO, formatDistanceToNow } from 'date-fns';
+import { Box, ListItem, ListItemText, Typography, IconButton, Tooltip, Chip } from '@mui/material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import RemoveIcon from '@mui/icons-material/Remove';
+import AddIcon from '@mui/icons-material/Add';
+import GitBranchIcon from '@mui/icons-material/GitBranch';
 
 export interface CommitWeight {
   hash: string;
@@ -506,6 +512,19 @@ export class DistributionService {
         }
       }
     ];
+
+    // Format the date for display
+    commits.forEach(commit => {
+      const commitDate = new Date(commit.date);
+      commit.formattedDate = commitDate.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true // Use 12-hour format
+      });
+    });
 
     // Calculate weights and explain the calculation
     const explanation: string[] = [];
