@@ -28,6 +28,11 @@ export interface TimeEntry {
   spentDate: string;
   hours: number;
   notes: string;
+  external_reference?: {
+    id: string;
+    group_id: string;
+    permalink?: string;
+  };
 }
 
 export interface DiffStats {
@@ -51,6 +56,7 @@ export interface CommitInfo {
   formattedMessage: string;
   hours?: number;
   diffStats?: DiffStats;
+  ticket?: string;
 }
 
 export interface WebhookRequest {

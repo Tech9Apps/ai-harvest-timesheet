@@ -15,6 +15,13 @@ const DEFAULT_GLOBAL_PREFERENCES: GlobalPreferences = {
   maximumCommitHours: 4,
   roundingPrecision: 2,
   branchParsing: DEFAULT_BRANCH_PARSING_PREFERENCES,
+  externalIssue: {
+    enabled: false,
+    issueTracker: {
+      type: 'none',
+      baseUrl: ''
+    }
+  }
 };
 
 const DEFAULT_REPOSITORY_PREFERENCES: RepositoryPreferences = {

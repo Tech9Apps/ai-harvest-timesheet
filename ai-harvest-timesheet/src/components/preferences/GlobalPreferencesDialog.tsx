@@ -14,6 +14,7 @@ import { preferencesService } from '../../services/preferencesService';
 import { GeneralSettings } from './tabs/GeneralSettings';
 import { DistributionSettings } from './tabs/DistributionSettings';
 import { BranchParsingSettings } from './BranchParsingSettings';
+import { ExternalIssueSettings } from './tabs/ExternalIssueSettings';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -95,6 +96,7 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
           <Tab label="General" {...a11yProps(0)} />
           <Tab label="Distribution" {...a11yProps(1)} />
           <Tab label="Branch Parsing" {...a11yProps(2)} />
+          <Tab label="External Issues" {...a11yProps(3)} />
         </Tabs>
       </Box>
       <DialogContent sx={{ p: 0 }}>
@@ -116,6 +118,12 @@ export const GlobalPreferencesDialog: React.FC<GlobalPreferencesDialogProps> = (
             onPreferencesChange={(branchParsing) => updateGlobalPreferences({ 
               branchParsing: { ...globalPreferences.branchParsing, ...branchParsing } 
             })}
+          />
+        </TabPanel>
+        <TabPanel value={tabValue} index={3}>
+          <ExternalIssueSettings
+            preferences={globalPreferences}
+            onPreferencesChange={updateGlobalPreferences}
           />
         </TabPanel>
       </DialogContent>

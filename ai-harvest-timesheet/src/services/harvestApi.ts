@@ -69,13 +69,19 @@ class HarvestApi {
 
   async createTimeEntry(entry: TimeEntry): Promise<void> {
     try {
-      await axios.post(`${this.baseURL}/time_entries`, {
+      const payload: any = {
         project_id: entry.projectId,
         task_id: entry.taskId,
         spent_date: entry.spentDate,
         hours: entry.hours,
         notes: entry.notes,
-      }, {
+      };
+
+      if (entry.external_reference) {
+        payload.external_reference = entry.external_reference;
+      }
+
+      await axios.post(`${this.baseURL}/time_entries`, payload, {
         headers: this.headers,
       });
     } catch (error) {

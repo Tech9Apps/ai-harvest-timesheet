@@ -25,8 +25,17 @@ export interface BranchParsingPreferences {
   selectedPreset: string | null;
 }
 
+export interface ExternalIssuePreferences {
+  enabled: boolean;
+  issueTracker: {
+    type: 'jira' | 'github' | 'none';
+    baseUrl: string;
+  };
+}
+
 export interface GlobalPreferences extends TimePreferences {
   branchParsing: BranchParsingPreferences;
+  externalIssue: ExternalIssuePreferences;
 }
 
 export type RepositoryPreferencesMap = {

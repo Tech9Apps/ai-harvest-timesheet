@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { Repository, TimeEntry, CommitInfo } from '../../types';
+import { GlobalPreferences } from '../../types/preferences';
 import { useLoading } from '../../context/LoadingContext';
 import { usePreferences } from '../../context/PreferencesContext';
 import { DateRangeSelector } from './DateRangeSelector';
@@ -410,6 +411,41 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     }
   };
 
+  const createTimeEntryWithExternalReference = (
+    commit: CommitInfo,
+    repository: Repository,
+    preferences: GlobalPreferences
+  ): TimeEntry => {
+    const baseEntry = {
+      projectId: repository.harvestProjectId,
+      taskId: repository.harvestTaskId,
+      spentDate: format(new Date(commit.date), 'yyyy-MM-dd'),
+      hours: commit.hours ?? 0,
+      notes: commit.formattedMessage,
+    };
+
+    // Only add external reference if the feature is enabled and we have a ticket number
+    if (preferences.externalIssue.enabled && 
+        preferences.externalIssue.issueTracker.type !== 'none' && 
+        commit.ticket) {
+      
+      const { type, baseUrl } = preferences.externalIssue.issueTracker;
+      
+      // Format the external reference based on the issue tracker type
+      const external_reference = {
+        id: commit.ticket,
+        group_id: type.toUpperCase(),
+        permalink: type === 'jira' 
+          ? `${baseUrl}/browse/${commit.ticket}`
+          : `${baseUrl}/issues/${commit.ticket.replace('#', '')}`
+      };
+
+      return { ...baseEntry, external_reference };
+    }
+
+    return baseEntry;
+  };
+
   const handleSync = async () => {
     if (Object.keys(processedCommits).length === 0) {
       setError('No time entries to sync. Please fetch commits first.');
@@ -487,13 +523,10 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
         const repository = repositories.find(repo => repo.path === repoPath);
         if (!repository) continue;
         
-        const repoTimeEntries = repoCommits.map(commit => ({
-          projectId: repository.harvestProjectId,
-          taskId: repository.harvestTaskId,
-          spentDate: format(new Date(commit.date), 'yyyy-MM-dd'),
-          hours: commit.hours ?? 0,
-          notes: commit.formattedMessage,
-        }));
+        const preferences = getEffectivePreferences(repository.path);
+        const repoTimeEntries = repoCommits.map(commit => 
+          createTimeEntryWithExternalReference(commit, repository, preferences)
+        );
 
         timeEntries.push(...repoTimeEntries);
       }

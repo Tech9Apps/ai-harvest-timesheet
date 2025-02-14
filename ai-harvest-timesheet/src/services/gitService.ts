@@ -220,6 +220,7 @@ export class GitService {
             date: commit.date,
             message: commit.message,
             branch: currentBranch,
+            ticket: ticketNumber,  // Include the ticket number
             formattedMessage: this.formatCommitMessage(ticketNumber, branchTitle, commit.message),
             diffStats
           };
