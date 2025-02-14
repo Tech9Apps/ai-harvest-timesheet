@@ -1,8 +1,8 @@
 # AI Harvest Timesheet
 
-[![GitHub all releases](https://img.shields.io/github/downloads/surajadsul/ai-harvest-timesheet/total?color=brightgreen&label=Downloads)](https://github.com/Tech9Apps/ai-harvest-timesheet/releases)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/surajadsul/ai-harvest-timesheet?label=Latest%20Release)](https://github.com/Tech9Apps/ai-harvest-timesheet/releases/latest)
-[![GitHub License](https://img.shields.io/github/Tech9Apps/surajadsul/ai-harvest-timesheet)](LICENSE)
+[![GitHub all releases](https://img.shields.io/github/downloads/Tech9Apps/ai-harvest-timesheet/total?color=brightgreen&label=Downloads)](https://github.com/Tech9Apps/ai-harvest-timesheet/releases)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/Tech9Apps/ai-harvest-timesheet?label=Latest%20Release)](https://github.com/Tech9Apps/ai-harvest-timesheet/releases/latest)
+[![GitHub License](https://img.shields.io/github/license/Tech9Apps/ai-harvest-timesheet)](LICENSE)
 
 An Electron application that automates time logging in Harvest based on Git commit history. Perfect for developers who want to maintain accurate time records without manual time entry.
 
