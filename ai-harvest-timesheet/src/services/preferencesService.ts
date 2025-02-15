@@ -1,5 +1,6 @@
-import { GlobalPreferences, RepositoryPreferences, RepositoryPreferencesMap, DEFAULT_BRANCH_PARSING_PREFERENCES } from '../types/preferences';
+import { GlobalPreferences, RepositoryPreferences, RepositoryPreferencesMap, DEFAULT_BRANCH_PARSING_PREFERENCES, DEFAULT_NOTIFICATION_PREFERENCES } from '../types/preferences';
 import { StorageError, QuotaExceededError, StorageUnavailableError, InvalidDataError } from '../types/errors';
+import { ipcRenderer } from 'electron';
 
 const STORAGE_KEYS = {
   GLOBAL_PREFERENCES: 'harvest-timesheet:global-preferences',
@@ -23,7 +24,8 @@ const DEFAULT_GLOBAL_PREFERENCES: GlobalPreferences = {
       type: 'none',
       baseUrl: ''
     }
-  }
+  },
+  notifications: DEFAULT_NOTIFICATION_PREFERENCES
 };
 
 const DEFAULT_REPOSITORY_PREFERENCES: RepositoryPreferences = {
@@ -132,6 +134,11 @@ class PreferencesService {
   setGlobalPreferences(preferences: GlobalPreferences): void {
     try {
       this.setItem(STORAGE_KEYS.GLOBAL_PREFERENCES, preferences);
+      
+      // Sync notification preferences with main process
+      if (preferences.notifications) {
+        ipcRenderer.send('update-notification-preferences', preferences.notifications);
+      }
     } catch (error) {
       if (error instanceof StorageError) {
         throw error;

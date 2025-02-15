@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Container, Box, Alert, Snackbar, Button } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import MainLayout from './components/layout/MainLayout';
 import { RepositoryManager } from './components/repository/RepositoryManager';
 import { TimeEntryPreview } from './components/timeEntry/TimeEntryPreview';
@@ -13,6 +15,7 @@ import { webhookService } from './services/webhookService';
 import { PreferencesProvider } from './context/PreferencesContext';
 import { GlobalPreferencesDialog } from './components/preferences/GlobalPreferencesDialog';
 import { ipcRenderer } from 'electron';
+import { NotificationSettingsDialog } from './components/notifications/NotificationSettingsDialog';
 
 function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -21,6 +24,7 @@ function App() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
   const [showGlobalPreferences, setShowGlobalPreferences] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const handleFetchCommits = async (startDate?: Date, endDate?: Date) => {
@@ -169,8 +173,20 @@ function App() {
 
     ipcRenderer.on('tray-action', handleTrayAction);
 
+    // Listen for app reset
+    const handleAppReset = () => {
+      console.log('[App] Handling application reset');
+      setRepositories([]);
+      setCommits({});
+      setShowCredentialsDialog(true);
+      setSuccess('Application has been reset successfully');
+    };
+
+    ipcRenderer.on('app-reset', handleAppReset);
+
     return () => {
       ipcRenderer.removeListener('tray-action', handleTrayAction);
+      ipcRenderer.removeListener('app-reset', handleAppReset);
     };
   }, []);
 
@@ -272,77 +288,124 @@ function App() {
     setShowCredentialsDialog(true);
   };
 
+  const handleReset = async () => {
+    if (window.confirm('Are you sure you want to reset the application? This will clear all settings and credentials.')) {
+      try {
+        // Clear all storage
+        storageService.clearAll();
+        console.log('[App] Cleared all storage');
+
+        // Reset main process data
+        const success = await ipcRenderer.invoke('reset-application');
+        if (success) {
+          // Clear local state
+          setRepositories([]);
+          setCommits({});
+          setShowCredentialsDialog(true);
+          setSuccess('Application has been reset successfully');
+        } else {
+          setError('Failed to reset application');
+        }
+      } catch (error) {
+        console.error('[App] Error resetting application:', error);
+        setError('Failed to reset application');
+      }
+    }
+  };
+
   return (
     <PreferencesProvider>
       <LoadingProvider>
-        <MainLayout>
-          <Container maxWidth="lg">
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
-              <Button
-                variant="outlined"
-                onClick={() => setShowGlobalPreferences(true)}
-                size="small"
-              >
-                Time Preferences
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={handleOpenCredentialsDialog}
-                size="small"
-              >
-                Update Harvest Credentials
-              </Button>
-            </Box>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <MainLayout>
+            <Container maxWidth="lg">
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowGlobalPreferences(true)}
+                  size="small"
+                >
+                  Time Preferences
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowNotificationSettings(true)}
+                  size="small"
+                >
+                  Notifications
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleOpenCredentialsDialog}
+                  size="small"
+                >
+                  Update Harvest Credentials
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleReset}
+                  size="small"
+                >
+                  Reset Application
+                </Button>
+              </Box>
 
-            <Box sx={{ my: 4 }}>
-              <RepositoryManager
-                repositories={repositories}
-                onRepositoryAdd={handleAddRepository}
-                onRepositoryUpdate={handleUpdateRepository}
-                onRepositoryDelete={handleDeleteRepository}
+              <Box sx={{ my: 4 }}>
+                <RepositoryManager
+                  repositories={repositories}
+                  onRepositoryAdd={handleAddRepository}
+                  onRepositoryUpdate={handleUpdateRepository}
+                  onRepositoryDelete={handleDeleteRepository}
+                />
+              </Box>
+              
+              <Box sx={{ my: 4 }}>
+                <TimeEntryPreview
+                  commits={commits}
+                  repositories={repositories}
+                  onSync={handleSync}
+                  onRefresh={handleFetchCommits}
+                />
+              </Box>
+
+              <HarvestCredentialsDialog
+                open={showCredentialsDialog}
+                onClose={handleCredentialsDialogClose}
               />
-            </Box>
-            
-            <Box sx={{ my: 4 }}>
-              <TimeEntryPreview
-                commits={commits}
-                repositories={repositories}
-                onSync={handleSync}
-                onRefresh={handleFetchCommits}
+
+              <GlobalPreferencesDialog
+                open={showGlobalPreferences}
+                onClose={() => setShowGlobalPreferences(false)}
               />
-            </Box>
 
-            <HarvestCredentialsDialog
-              open={showCredentialsDialog}
-              onClose={handleCredentialsDialogClose}
-            />
+              <NotificationSettingsDialog
+                open={showNotificationSettings}
+                onClose={() => setShowNotificationSettings(false)}
+              />
 
-            <GlobalPreferencesDialog
-              open={showGlobalPreferences}
-              onClose={() => setShowGlobalPreferences(false)}
-            />
+              <Snackbar
+                open={!!error}
+                autoHideDuration={6000}
+                onClose={() => setError(null)}
+              >
+                <Alert severity="error" onClose={() => setError(null)}>
+                  {error}
+                </Alert>
+              </Snackbar>
 
-            <Snackbar
-              open={!!error}
-              autoHideDuration={6000}
-              onClose={() => setError(null)}
-            >
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
-              </Alert>
-            </Snackbar>
-
-            <Snackbar
-              open={!!success}
-              autoHideDuration={6000}
-              onClose={() => setSuccess(null)}
-            >
-              <Alert severity="success" onClose={() => setSuccess(null)}>
-                {success}
-              </Alert>
-            </Snackbar>
-          </Container>
-        </MainLayout>
+              <Snackbar
+                open={!!success}
+                autoHideDuration={6000}
+                onClose={() => setSuccess(null)}
+              >
+                <Alert severity="success" onClose={() => setSuccess(null)}>
+                  {success}
+                </Alert>
+              </Snackbar>
+            </Container>
+          </MainLayout>
+        </LocalizationProvider>
       </LoadingProvider>
     </PreferencesProvider>
   );

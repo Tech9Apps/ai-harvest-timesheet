@@ -1,9 +1,9 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme, Notification } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import axios from 'axios';
 import fs from 'fs';
-import { startOfWeek, startOfMonth, format } from 'date-fns';
+import { startOfWeek, startOfMonth, format, parse, isWeekend } from 'date-fns';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,10 +25,14 @@ let tray: Tray | null = null;
 let forceQuit = false;
 let billableHours = { today: 0, week: 0, month: 0 };
 let harvestPollInterval: NodeJS.Timeout | null = null;
+let notificationScheduler: NodeJS.Timeout | null = null;
 
 // Store Harvest credentials in main process
 let harvestToken: string | null = null;
 let harvestAccountId: string | null = null;
+
+// Add test mode flag
+let notificationTestMode = true; // Set to true for testing
 
 // Function to get the credentials file path
 function getCredentialsPath() {
@@ -65,6 +69,25 @@ function loadCredentials() {
     console.error('[Main] Error loading credentials:', error);
   }
   return false;
+}
+
+// Function to get the preferences file path
+function getPreferencesPath() {
+  return join(app.getPath('userData'), 'preferences.json');
+}
+
+// Function to load preferences
+function loadPreferences() {
+  try {
+    const preferencesPath = getPreferencesPath();
+    if (fs.existsSync(preferencesPath)) {
+      const data = JSON.parse(fs.readFileSync(preferencesPath, 'utf8'));
+      return data;
+    }
+  } catch (error) {
+    console.error('[Main] Error loading preferences:', error);
+  }
+  return {};
 }
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin
@@ -231,6 +254,16 @@ function updateTrayMenu() {
     {
       label: 'Refresh Hours',
       click: fetchHarvestHours
+    },
+    { type: 'separator' },
+    {
+      label: 'Reset Application',
+      click: async () => {
+        const success = resetApplicationData();
+        if (success && win) {
+          win.show();
+        }
+      }
     },
     { type: 'separator' },
     {
@@ -413,6 +446,161 @@ app.on('activate', () => {
 app.on('before-quit', () => {
   forceQuit = true;
   stopHarvestPolling();
+  if (notificationScheduler) {
+    clearInterval(notificationScheduler);
+    notificationScheduler = null;
+  }
+});
+
+// Function to save preferences
+function savePreferences(preferences: any) {
+  try {
+    const preferencesPath = getPreferencesPath();
+    fs.writeFileSync(preferencesPath, JSON.stringify(preferences, null, 2));
+    console.log('[Main] Preferences saved successfully:', preferences);
+  } catch (error) {
+    console.error('[Main] Error saving preferences:', error);
+  }
+}
+
+// Function to schedule daily notification
+function scheduleDailyNotification(time: string) {
+  // Clear existing scheduler if any
+  if (notificationScheduler) {
+    clearInterval(notificationScheduler);
+    notificationScheduler = null;
+  }
+
+  // Parse the time string (HH:mm format)
+  const [targetHours, targetMinutes] = time.split(':').map(Number);
+  let lastNotificationDate: string | null = null;
+
+  console.log('[Main] Scheduling daily notification for', time, 'local time', 
+    notificationTestMode ? '(Test Mode - including weekends)' : '(Normal Mode - weekdays only)');
+
+  // Schedule the notification check
+  notificationScheduler = setInterval(() => {
+    const now = new Date();
+    const today = now.toDateString();
+    
+    // Debug logging every minute
+    if (now.getSeconds() === 0) {
+      console.log('[Main] Checking notification time:', {
+        current: `${now.getHours()}:${now.getMinutes()}`,
+        target: `${targetHours}:${targetMinutes}`,
+        lastNotification: lastNotificationDate,
+        isWeekend: isWeekend(now),
+        testMode: notificationTestMode,
+        timeUntilNext: `${targetHours - now.getHours()}h ${targetMinutes - now.getMinutes()}m`
+      });
+    }
+    
+    // Skip if we already notified today
+    if (lastNotificationDate === today) {
+      return;
+    }
+
+    // Skip weekends only if not in test mode
+    if (isWeekend(now) && !notificationTestMode) {
+      console.log('[Main] Skipping notification - weekend (disable test mode to skip weekends)');
+      return;
+    }
+
+    // Check if it's time to show notification
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+
+    if (currentHours === targetHours && currentMinutes === targetMinutes) {
+      console.log('[Main] Showing notification at', now.toLocaleTimeString(), 
+        isWeekend(now) ? '(Weekend - Test Mode)' : '');
+      
+      const notification = new Notification({
+        title: 'Time Logging Reminder',
+        body: notificationTestMode && isWeekend(now) 
+          ? 'Test Mode: Weekend Notification' 
+          : 'Remember to log your time for today!',
+        silent: false
+      });
+
+      notification.show();
+      lastNotificationDate = today;
+
+      // Add click handler to open the app
+      notification.on('click', () => {
+        if (win) {
+          if (win.isMinimized()) win.restore();
+          if (!win.isVisible()) win.show();
+          win.focus();
+        }
+      });
+    }
+  }, 10000); // Check every 10 seconds for more precision
+}
+
+// Add handler for updating notification preferences
+ipcMain.on('update-notification-preferences', (_event, { enableDailyReminder, reminderTime }) => {
+  console.log('[Main] Updating notification preferences:', { 
+    enableDailyReminder, 
+    reminderTime,
+    currentTime: new Date().toLocaleTimeString() 
+  });
+  
+  // Save the preferences
+  const preferences = loadPreferences();
+  preferences.notifications = { enableDailyReminder, reminderTime };
+  savePreferences(preferences);
+  
+  if (enableDailyReminder && reminderTime) {
+    scheduleDailyNotification(reminderTime);
+  } else if (notificationScheduler) {
+    clearInterval(notificationScheduler);
+    notificationScheduler = null;
+  }
+});
+
+// Function to reset application data
+function resetApplicationData() {
+  try {
+    const credentialsPath = getCredentialsPath();
+    const preferencesPath = getPreferencesPath();
+
+    // Clear credentials from memory
+    harvestToken = null;
+    harvestAccountId = null;
+
+    // Delete files if they exist
+    if (fs.existsSync(credentialsPath)) {
+      fs.unlinkSync(credentialsPath);
+      console.log('[Main] Credentials file deleted');
+    }
+    if (fs.existsSync(preferencesPath)) {
+      fs.unlinkSync(preferencesPath);
+      console.log('[Main] Preferences file deleted');
+    }
+
+    // Stop any running processes
+    stopHarvestPolling();
+    if (notificationScheduler) {
+      clearInterval(notificationScheduler);
+      notificationScheduler = null;
+    }
+
+    // Update UI
+    if (win) {
+      win.webContents.send('app-reset');
+    }
+
+    console.log('[Main] Application data reset successfully');
+    return true;
+  } catch (error) {
+    console.error('[Main] Error resetting application data:', error);
+    return false;
+  }
+}
+
+// Add IPC handler for reset
+ipcMain.handle('reset-application', async () => {
+  return resetApplicationData();
 });
 
 // Initialize app
@@ -426,5 +614,20 @@ app.whenReady().then(() => {
     startHarvestPolling();
   } else {
     console.log('[Main] No saved credentials found');
+  }
+
+  // Load and initialize notification preferences
+  try {
+    const preferences = loadPreferences();
+    console.log('[Main] Loaded preferences:', preferences);
+    
+    if (preferences.notifications?.enableDailyReminder && preferences.notifications?.reminderTime) {
+      console.log('[Main] Initializing notifications from saved preferences:', preferences.notifications);
+      scheduleDailyNotification(preferences.notifications.reminderTime);
+    } else {
+      console.log('[Main] No notification preferences found or notifications disabled');
+    }
+  } catch (error) {
+    console.error('[Main] Error loading notification preferences:', error);
   }
 }); 

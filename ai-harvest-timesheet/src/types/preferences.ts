@@ -35,9 +35,15 @@ export interface ExternalIssuePreferences {
   };
 }
 
+export interface NotificationPreferences {
+  enableDailyReminder: boolean;
+  reminderTime: string; // HH:mm format
+}
+
 export interface GlobalPreferences extends TimePreferences {
   branchParsing: BranchParsingPreferences;
   externalIssue: ExternalIssuePreferences;
+  notifications: NotificationPreferences;
 }
 
 export type RepositoryPreferencesMap = {
@@ -91,4 +97,9 @@ export const DEFAULT_BRANCH_PARSING_PREFERENCES: BranchParsingPreferences = {
   pattern: DEFAULT_PRESET_PATTERNS[0].pattern,
   messageTemplate: "${ticket} | ${title} | ${message}",
   selectedPreset: DEFAULT_PRESET_PATTERNS[0].name
+};
+
+export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  enableDailyReminder: true,
+  reminderTime: "17:00" // 5 PM default
 }; 
