@@ -26,7 +26,8 @@
     },
     "files": [
       "dist/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*",
+      "assets/**/*"
     ],
     "publish": null,
     "mac": {

@@ -27,6 +27,9 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
 function getIconPath(): string {
   const iconName = 'tray-icon.png';
+  if (app.isPackaged) {
+    return join(process.resourcesPath, 'assets', 'tray-icons', iconName);
+  }
   return join(__dirname, '../assets/tray-icons', iconName);
 }
 
@@ -46,14 +49,14 @@ function updateTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: win?.isVisible() ? 'Hide Window' : 'Show Window',
-      click: () => {
-        if (win?.isVisible()) {
-          win.hide();
-        } else {
-          win?.show();
-        }
-      }
+      label: 'Open Timesheet',
+      click: () => win?.show(),
+      visible: !win?.isVisible()
+    },
+    {
+      label: 'Open Timesheet',
+      click: () => win?.hide(),
+      visible: win?.isVisible()
     },
     { type: 'separator' },
     {
@@ -89,21 +92,12 @@ function updateTrayMenu() {
 
 function createTray() {
   // Create initial tray with default icon
-  const icon = nativeImage.createFromPath(getIconPath(nativeTheme.shouldUseDarkColors));
+  const icon = nativeImage.createFromPath(getIconPath());
   tray = new Tray(icon);
   tray.setToolTip('AI Harvest Timesheet');
 
   // Update menu
   updateTrayMenu();
-  
-  // Single click to toggle window
-  tray.on('click', () => {
-    if (win?.isVisible()) {
-      win.hide();
-    } else {
-      win?.show();
-    }
-  });
 
   // Listen for theme changes
   nativeTheme.on('updated', updateTrayIcon);
@@ -131,7 +125,12 @@ function createWindow() {
   // Show window when it's ready to prevent flickering
   win.once('ready-to-show', () => {
     win?.show();
+    updateTrayMenu(); // Update menu when window is shown
   });
+
+  // Update tray menu when window is shown or hidden
+  win.on('show', updateTrayMenu);
+  win.on('hide', updateTrayMenu);
 
   // Prevent window from being closed, hide it instead
   win.on('close', (event) => {
