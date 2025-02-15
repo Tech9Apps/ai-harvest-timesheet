@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import axios from 'axios';
 import fs from 'fs';
+import { startOfWeek, startOfMonth, format } from 'date-fns';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,7 +23,7 @@ process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.D
 let win: BrowserWindow | null;
 let tray: Tray | null = null;
 let forceQuit = false;
-let todaysHours = 0;
+let billableHours = { today: 0, week: 0, month: 0 };
 let harvestPollInterval: NodeJS.Timeout | null = null;
 
 // Store Harvest credentials in main process
@@ -71,40 +72,92 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
 async function fetchHarvestHours() {
   try {
-    console.log('[Main] Starting to fetch Harvest hours');
-    
     if (!harvestToken || !harvestAccountId) {
       console.log('[Main] No Harvest credentials in main process');
       return;
     }
 
-    const today = new Date().toISOString().split('T')[0];
-    console.log('[Main] Fetching Harvest time entries for date:', today);
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Start week on Monday
+    const monthStart = startOfMonth(today);
 
-    const response = await axios.get('https://api.harvestapp.com/v2/time_entries', {
-      headers: {
-        'Authorization': `Bearer ${harvestToken}`,
-        'Harvest-Account-ID': harvestAccountId,
-        'Content-Type': 'application/json',
-      },
+    // Format dates as YYYYMMDD for reports API
+    const todayStr = format(today, 'yyyyMMdd');
+    const weekStartStr = format(weekStart, 'yyyyMMdd');
+    const monthStartStr = format(monthStart, 'yyyyMMdd');
+
+    // Create request configs
+    const todayConfig = {
+      url: 'https://api.harvestapp.com/v2/reports/time/team',
       params: {
-        from: today,
-        to: today,
+        user_id: harvestAccountId,
+        from: todayStr,
+        to: todayStr
       }
-    });
+    };
 
-    console.log('[Main] Received Harvest time entries', {
-      entriesCount: response.data.time_entries.length,
-      date: today
-    });
+    const weekConfig = {
+      url: 'https://api.harvestapp.com/v2/reports/time/team',
+      params: {
+        user_id: harvestAccountId,
+        from: weekStartStr,
+        to: todayStr
+      }
+    };
 
-    const hours = response.data.time_entries.reduce(
-      (total: number, entry: any) => total + (entry.hours || 0),
-      0
-    );
+    const monthConfig = {
+      url: 'https://api.harvestapp.com/v2/reports/time/team',
+      params: {
+        user_id: harvestAccountId,
+        from: monthStartStr,
+        to: todayStr
+      }
+    };
 
-    console.log('[Main] Calculated total hours', { hours, date: today });
-    todaysHours = hours;
+    // Fetch all periods in parallel using reports API
+    const [todayReport, weekReport, monthReport] = await Promise.all([
+      axios.get(todayConfig.url, {
+        headers: {
+          'Authorization': `Bearer ${harvestToken}`,
+          'Harvest-Account-ID': harvestAccountId,
+          'Content-Type': 'application/json',
+        },
+        params: todayConfig.params
+      }),
+      axios.get(weekConfig.url, {
+        headers: {
+          'Authorization': `Bearer ${harvestToken}`,
+          'Harvest-Account-ID': harvestAccountId,
+          'Content-Type': 'application/json',
+        },
+        params: weekConfig.params
+      }),
+      axios.get(monthConfig.url, {
+        headers: {
+          'Authorization': `Bearer ${harvestToken}`,
+          'Harvest-Account-ID': harvestAccountId,
+          'Content-Type': 'application/json',
+        },
+        params: monthConfig.params
+      })
+    ]);
+
+    // Validate responses and extract billable hours
+    const validateAndExtractHours = (response: any) => {
+      if (!response?.data?.results?.length) {
+        return 0;
+      }
+      const hours = response.data.results[0]?.billable_hours;
+      return typeof hours === 'number' ? hours : 0;
+    };
+
+    billableHours = {
+      today: validateAndExtractHours(todayReport),
+      week: validateAndExtractHours(weekReport),
+      month: validateAndExtractHours(monthReport)
+    };
+
+    // Update tray menu with new hours
     updateTrayMenu();
   } catch (error) {
     console.error('[Main] Error fetching Harvest hours:', error);
@@ -112,7 +165,7 @@ async function fetchHarvestHours() {
       console.error('[Main] Response details:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
-        data: error.response?.data,
+        data: error.response?.data
       });
     }
   }
@@ -154,23 +207,30 @@ function updateTrayMenu() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: `Hours Today: ${todaysHours.toFixed(2)}`,
+      label: 'Billable Hours',
       enabled: false
     },
     {
-      label: 'Refresh Hours',
-      click: fetchHarvestHours
+      label: `• Today: ${billableHours.today.toFixed(2)}h`,
+      enabled: false
+    },
+    {
+      label: `• Week: ${billableHours.week.toFixed(2)}h`,
+      enabled: false
+    },
+    {
+      label: `• Month: ${billableHours.month.toFixed(2)}h`,
+      enabled: false
     },
     { type: 'separator' },
     {
-      label: 'Timesheet',
-      click: () => win?.show(),
-      visible: !win?.isVisible()
+      label: 'Show/Hide Timesheet',
+      click: () => win?.isVisible() ? win?.hide() : win?.show()
     },
+    { type: 'separator' },
     {
-      label: 'Timesheet',
-      click: () => win?.hide(),
-      visible: win?.isVisible()
+      label: 'Refresh Hours',
+      click: fetchHarvestHours
     },
     { type: 'separator' },
     {

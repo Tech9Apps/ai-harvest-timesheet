@@ -80,3 +80,9 @@ export interface WebhookResponse {
     hours?: number;
   }[];
 }
+
+export interface BillableHours {
+  today: number;
+  week: number;
+  month: number;
+}
