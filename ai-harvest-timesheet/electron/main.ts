@@ -154,7 +154,7 @@ function updateTrayMenu() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: `Harvest Hours Today: ${todaysHours.toFixed(2)}`,
+      label: `Hours Today: ${todaysHours.toFixed(2)}`,
       enabled: false
     },
     {
@@ -261,13 +261,6 @@ function createWindow() {
     win.loadFile(join(process.env.DIST || 'dist', 'index.html'));
   }
 }
-
-// IPC Communication
-ipcMain.on('update-hours', (_event, hours: number) => {
-  console.log('[Main] Received hours update through IPC:', hours);
-  todaysHours = hours;
-  updateTrayMenu();
-});
 
 // Add handler for refreshing Harvest hours
 ipcMain.on('refresh-harvest-hours', () => {

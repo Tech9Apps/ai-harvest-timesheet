@@ -21,61 +21,25 @@ function App() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
   const [showGlobalPreferences, setShowGlobalPreferences] = useState(false);
-
-  useEffect(() => {
-    // Load repositories from storage
-    const savedRepositories = storageService.getRepositories();
-    setRepositories(savedRepositories);
-
-    // Load Harvest credentials from main process
-    ipcRenderer.invoke('get-harvest-credentials').then(({ token, accountId, hasCredentials }) => {
-      if (token && accountId) {
-        harvestApi.setCredentials(token, accountId);
-      }
-      
-      if (!hasCredentials) {
-        setShowCredentialsDialog(true);
-      }
-    });
-
-    // Initial fetch of commits
-    handleFetchCommits();
-  }, []);
-
-  const handleAddRepository = (repository: Repository) => {
-    const updatedRepositories = storageService.addRepository({
-      ...repository,
-      extractTicketNumber: true,
-      enabled: true, // Ensure new repositories are enabled by default
-    });
-    setRepositories(updatedRepositories);
-    setSuccess('Repository added successfully');
-    handleFetchCommits();
-  };
-
-  const handleUpdateRepository = (updatedRepo: Repository) => {
-    const updatedRepositories = storageService.updateRepository(updatedRepo);
-    setRepositories(updatedRepositories);
-    setSuccess('Repository settings updated successfully');
-    handleFetchCommits(); // Refresh commits to update formatting
-  };
-
-  const handleDeleteRepository = (repositoryId: string) => {
-    const updatedRepositories = storageService.deleteRepository(repositoryId);
-    setRepositories(updatedRepositories);
-    setSuccess('Repository removed successfully');
-  };
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const handleFetchCommits = async (startDate?: Date, endDate?: Date) => {
+    console.log('[App] Starting to fetch commits', { 
+      repositoryCount: repositories.length,
+      enabledCount: repositories.filter(repo => repo.enabled).length 
+    });
+    
     const newCommits: { [repoPath: string]: CommitInfo[] } = {};
     
     try {
       // First, fetch all commits from enabled repositories only
       for (const repository of repositories.filter(repo => repo.enabled)) {
+        console.log('[App] Processing repository:', repository.path);
         const gitService = new GitService(repository);
         const isValid = await gitService.validateRepository();
         
         if (!isValid) {
+          console.error('[App] Invalid repository:', repository.path);
           setError(`Invalid repository: ${repository.path}`);
           continue;
         }
@@ -86,6 +50,11 @@ function App() {
         } else {
           commits = await gitService.getTodayCommits();
         }
+
+        console.log('[App] Found commits for repository:', {
+          path: repository.path,
+          commitCount: commits.length
+        });
 
         if (commits.length > 0) {
           newCommits[repository.path] = commits;
@@ -125,6 +94,11 @@ function App() {
         }
       }
 
+      console.log('[App] Commit fetch completed', {
+        repositoriesWithCommits: Object.keys(newCommits).length,
+        totalCommits: Object.values(newCommits).reduce((sum, commits) => sum + commits.length, 0)
+      });
+
       setCommits(newCommits);
       if (Object.keys(newCommits).length === 0) {
         setSuccess('No commits found for the selected period');
@@ -132,9 +106,90 @@ function App() {
         setSuccess('Commits fetched successfully');
       }
     } catch (error) {
+      console.error('[App] Error fetching commits:', error);
       setError('Error fetching commits');
-      console.error('Error fetching commits:', error);
     }
+  };
+
+  useEffect(() => {
+    async function initialize() {
+      console.log('[App] Starting initialization');
+      
+      // Load repositories from storage
+      const savedRepositories = storageService.getRepositories();
+      console.log('[App] Loaded repositories:', {
+        count: savedRepositories.length,
+        enabled: savedRepositories.filter(r => r.enabled).length
+      });
+      setRepositories(savedRepositories);
+
+      // Load Harvest credentials from main process
+      const { token, accountId, hasCredentials } = await ipcRenderer.invoke('get-harvest-credentials');
+      console.log('[App] Checked credentials:', { hasCredentials });
+
+      if (token && accountId) {
+        console.log('[App] Setting credentials in API service');
+        harvestApi.setCredentials(token, accountId);
+      }
+      
+      if (!hasCredentials) {
+        console.log('[App] No credentials found, showing dialog');
+        setShowCredentialsDialog(true);
+      } else {
+        console.log('[App] Credentials found, fetching commits');
+        await handleFetchCommits();
+      }
+
+      setIsInitialized(true);
+    }
+
+    initialize();
+
+    // Listen for tray actions
+    const handleTrayAction = (_event: any, action: string) => {
+      console.log('[App] Received tray action:', action);
+      switch (action) {
+        case 'refresh':
+          handleFetchCommits();
+          break;
+        case 'sync':
+          // You might want to trigger sync here if needed
+          break;
+        case 'preferences':
+          setShowGlobalPreferences(true);
+          break;
+      }
+    };
+
+    ipcRenderer.on('tray-action', handleTrayAction);
+
+    return () => {
+      ipcRenderer.removeListener('tray-action', handleTrayAction);
+    };
+  }, []);
+
+  const handleAddRepository = (repository: Repository) => {
+    const updatedRepositories = storageService.addRepository({
+      ...repository,
+      extractTicketNumber: true,
+      enabled: true, // Ensure new repositories are enabled by default
+    });
+    setRepositories(updatedRepositories);
+    setSuccess('Repository added successfully');
+    handleFetchCommits();
+  };
+
+  const handleUpdateRepository = (updatedRepo: Repository) => {
+    const updatedRepositories = storageService.updateRepository(updatedRepo);
+    setRepositories(updatedRepositories);
+    setSuccess('Repository settings updated successfully');
+    handleFetchCommits(); // Refresh commits to update formatting
+  };
+
+  const handleDeleteRepository = (repositoryId: string) => {
+    const updatedRepositories = storageService.deleteRepository(repositoryId);
+    setRepositories(updatedRepositories);
+    setSuccess('Repository removed successfully');
   };
 
   const handleSync = async (timeEntries: TimeEntry[]) => {
