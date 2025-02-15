@@ -272,8 +272,8 @@ function createWindow() {
     show: false, // Don't show the window until it's ready
   });
 
-  // Set window to be visible on all workspaces (helps with fullscreen app menu visibility)
-  win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // // Set window to be visible on all workspaces (helps with fullscreen app menu visibility)
+  // win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
