@@ -12,6 +12,7 @@ import { LoadingProvider } from './context/LoadingContext';
 import { webhookService } from './services/webhookService';
 import { PreferencesProvider } from './context/PreferencesContext';
 import { GlobalPreferencesDialog } from './components/preferences/GlobalPreferencesDialog';
+import { ipcRenderer } from 'electron';
 
 function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -26,15 +27,16 @@ function App() {
     const savedRepositories = storageService.getRepositories();
     setRepositories(savedRepositories);
 
-    // Load Harvest credentials from localStorage
-    const token = localStorage.getItem('harvest_access_token');
-    const accountId = localStorage.getItem('harvest_account_id');
-
-    if (token && accountId) {
-      harvestApi.setCredentials(token, accountId);
-    } else {
-      setShowCredentialsDialog(true);
-    }
+    // Load Harvest credentials from main process
+    ipcRenderer.invoke('get-harvest-credentials').then(({ token, accountId, hasCredentials }) => {
+      if (token && accountId) {
+        harvestApi.setCredentials(token, accountId);
+      }
+      
+      if (!hasCredentials) {
+        setShowCredentialsDialog(true);
+      }
+    });
 
     // Initial fetch of commits
     handleFetchCommits();
@@ -168,17 +170,19 @@ function App() {
         delete updatedCommits[path];
       });
       setCommits(updatedCommits);
+
+      // Trigger a refresh of Harvest hours in the main process
+      ipcRenderer.send('refresh-harvest-hours');
     } catch (error) {
       setError('Error syncing time entries');
       console.error('Error syncing time entries:', error);
     }
   };
 
-  const handleCredentialsDialogClose = () => {
+  const handleCredentialsDialogClose = async () => {
     // Only close the dialog if we have valid credentials
-    const token = localStorage.getItem('harvest_access_token');
-    const accountId = localStorage.getItem('harvest_account_id');
-    if (token && accountId) {
+    const { hasCredentials } = await ipcRenderer.invoke('get-harvest-credentials');
+    if (hasCredentials) {
       setShowCredentialsDialog(false);
     }
   };
