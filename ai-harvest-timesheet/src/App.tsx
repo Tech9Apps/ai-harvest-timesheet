@@ -29,6 +29,8 @@ function App() {
       enabledCount: repositories.filter(repo => repo.enabled).length 
     });
     
+    // Reset commits state before fetching new ones
+    setCommits({});
     const newCommits: { [repoPath: string]: CommitInfo[] } = {};
     
     try {
@@ -115,32 +117,36 @@ function App() {
     async function initialize() {
       console.log('[App] Starting initialization');
       
-      // Load repositories from storage
-      const savedRepositories = storageService.getRepositories();
-      console.log('[App] Loaded repositories:', {
-        count: savedRepositories.length,
-        enabled: savedRepositories.filter(r => r.enabled).length
-      });
-      setRepositories(savedRepositories);
+      try {
+        // Load repositories from storage
+        const savedRepositories = storageService.getRepositories();
+        console.log('[App] Loaded repositories:', {
+          count: savedRepositories.length,
+          enabled: savedRepositories.filter(r => r.enabled).length
+        });
+        
+        // Load Harvest credentials from main process
+        const { token, accountId, hasCredentials } = await ipcRenderer.invoke('get-harvest-credentials');
+        console.log('[App] Checked credentials:', { hasCredentials });
 
-      // Load Harvest credentials from main process
-      const { token, accountId, hasCredentials } = await ipcRenderer.invoke('get-harvest-credentials');
-      console.log('[App] Checked credentials:', { hasCredentials });
+        if (token && accountId) {
+          console.log('[App] Setting credentials in API service');
+          harvestApi.setCredentials(token, accountId);
+        }
 
-      if (token && accountId) {
-        console.log('[App] Setting credentials in API service');
-        harvestApi.setCredentials(token, accountId);
+        // Set repositories first
+        setRepositories(savedRepositories);
+        
+        if (!hasCredentials) {
+          console.log('[App] No credentials found, showing dialog');
+          setShowCredentialsDialog(true);
+        }
+
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('[App] Error during initialization:', error);
+        setError('Error initializing application');
       }
-      
-      if (!hasCredentials) {
-        console.log('[App] No credentials found, showing dialog');
-        setShowCredentialsDialog(true);
-      } else {
-        console.log('[App] Credentials found, fetching commits');
-        await handleFetchCommits();
-      }
-
-      setIsInitialized(true);
     }
 
     initialize();
@@ -168,6 +174,14 @@ function App() {
     };
   }, []);
 
+  // Separate effect to handle fetching commits after repositories are loaded
+  useEffect(() => {
+    if (repositories.length > 0) {
+      console.log('[App] Repositories loaded, fetching commits');
+      handleFetchCommits();
+    }
+  }, [repositories]);
+
   const handleAddRepository = (repository: Repository) => {
     const updatedRepositories = storageService.addRepository({
       ...repository,
@@ -182,8 +196,20 @@ function App() {
   const handleUpdateRepository = (updatedRepo: Repository) => {
     const updatedRepositories = storageService.updateRepository(updatedRepo);
     setRepositories(updatedRepositories);
-    setSuccess('Repository settings updated successfully');
-    handleFetchCommits(); // Refresh commits to update formatting
+
+    // If repository is being disabled, remove its commits
+    if (!updatedRepo.enabled) {
+      setCommits(prevCommits => {
+        const newCommits = { ...prevCommits };
+        delete newCommits[updatedRepo.path];
+        return newCommits;
+      });
+      setSuccess('Repository disabled');
+    } else {
+      // If repository is being enabled, fetch its commits
+      handleFetchCommits();
+      setSuccess('Repository enabled');
+    }
   };
 
   const handleDeleteRepository = (repositoryId: string) => {
