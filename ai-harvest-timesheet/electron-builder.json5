@@ -9,12 +9,14 @@
   },
   "files": [
     "dist",
-    "dist-electron"
+    "dist-electron",
+    "assets/**/*"
   ],
   "mac": {
     "target": [
       "dmg"
     ],
+    "icon": "assets/icons/icon.iconset/icon_512x512@2x.png",
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {

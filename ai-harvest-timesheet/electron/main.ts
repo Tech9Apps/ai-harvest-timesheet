@@ -291,18 +291,41 @@ function createTray() {
   nativeTheme.on('updated', updateTrayIcon);
 }
 
+// Function to get the app icon path
+function getAppIconPath(): string {
+  const iconName = 'icon_512x512@2x.png';
+  
+  if (app.isPackaged) {
+    return join(process.resourcesPath, 'assets', 'icons', 'icon.iconset', iconName);
+  }
+  
+  // In development mode
+  const projectRoot = join(__dirname, '..');
+  return join(projectRoot, 'assets', 'icons', 'icon.iconset', iconName);
+}
+
 function createWindow() {
+  // Create the icon before using it
+  const iconPath = getAppIconPath();
+  console.log('[Main] Loading app icon from:', iconPath);
+  
+  // Create native image
+  const icon = nativeImage.createFromPath(iconPath);
+  const sizes = icon.getSize();
+  console.log('[Main] Created native image with size:', sizes.width, 'x', sizes.height);
+  
   win = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    backgroundColor: '#121212', // Match dark theme background
+    backgroundColor: '#121212',
+    icon: icon,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
     },
-    show: false, // Don't show the window until it's ready
+    show: false,
   });
 
   // // Set window to be visible on all workspaces (helps with fullscreen app menu visibility)
@@ -629,5 +652,22 @@ app.whenReady().then(() => {
     }
   } catch (error) {
     console.error('[Main] Error loading notification preferences:', error);
+  }
+
+  // Also set the dock icon for macOS
+  if (process.platform === 'darwin') {
+    try {
+      const iconPath = getAppIconPath();
+      console.log('[Main] Setting dock icon from:', iconPath);
+      
+      const icon = nativeImage.createFromPath(iconPath);
+      const sizes = icon.getSize();
+      console.log('[Main] Created dock icon with size:', sizes.width, 'x', sizes.height);
+      
+      app.dock.setIcon(icon);
+      console.log('[Main] Successfully set dock icon');
+    } catch (error) {
+      console.error('[Main] Error setting dock icon:', error);
+    }
   }
 }); 
