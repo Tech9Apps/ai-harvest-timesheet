@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -18,8 +18,96 @@ process.env.DIST = join(__dirname, '../dist');
 process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST, '../public');
 
 let win: BrowserWindow | null;
+let tray: Tray | null = null;
+let forceQuit = false;
+let todaysHours = 0;
+
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
+
+function getIconPath(): string {
+  const iconName = 'tray-icon.png';
+  return join(__dirname, '../assets/tray-icons', iconName);
+}
+
+function updateTrayIcon() {
+  if (!tray) return;
+  const icon = nativeImage.createFromPath(getIconPath());
+  tray.setImage(icon);
+}
+
+function updateTrayMenu() {
+  if (!tray) return;
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: `Status: ${todaysHours.toFixed(2)} hours logged today`,
+      enabled: false
+    },
+    { type: 'separator' },
+    {
+      label: win?.isVisible() ? 'Hide Window' : 'Show Window',
+      click: () => {
+        if (win?.isVisible()) {
+          win.hide();
+        } else {
+          win?.show();
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Sync Time Entries',
+      click: () => {
+        win?.webContents.send('tray-action', 'sync');
+      }
+    },
+    {
+      label: 'Refresh Commits',
+      click: () => {
+        win?.webContents.send('tray-action', 'refresh');
+      }
+    },
+    {
+      label: 'Open Preferences',
+      click: () => {
+        win?.webContents.send('tray-action', 'preferences');
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        forceQuit = true;
+        app.quit();
+      }
+    }
+  ]);
+
+  tray.setContextMenu(contextMenu);
+}
+
+function createTray() {
+  // Create initial tray with default icon
+  const icon = nativeImage.createFromPath(getIconPath(nativeTheme.shouldUseDarkColors));
+  tray = new Tray(icon);
+  tray.setToolTip('AI Harvest Timesheet');
+
+  // Update menu
+  updateTrayMenu();
+  
+  // Single click to toggle window
+  tray.on('click', () => {
+    if (win?.isVisible()) {
+      win.hide();
+    } else {
+      win?.show();
+    }
+  });
+
+  // Listen for theme changes
+  nativeTheme.on('updated', updateTrayIcon);
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -45,11 +133,32 @@ function createWindow() {
     win?.show();
   });
 
+  // Prevent window from being closed, hide it instead
+  win.on('close', (event) => {
+    if (!forceQuit) {
+      event.preventDefault();
+      win?.hide();
+      return false;
+    }
+  });
+
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {
     win.loadFile(join(process.env.DIST || 'dist', 'index.html'));
   }
+}
+
+// IPC Communication
+ipcMain.on('update-hours', (_event, hours: number) => {
+  todaysHours = hours;
+  updateTrayMenu();
+});
+
+// Handle creating/removing shortcuts on Windows when installing/uninstalling
+if (require('electron').app.isPackaged) {
+  // Custom protocol handler for deep linking
+  app.setAsDefaultProtocolClient('ai-harvest-timesheet');
 }
 
 app.on('window-all-closed', () => {
@@ -64,4 +173,12 @@ app.on('activate', () => {
   }
 });
 
-app.whenReady().then(createWindow); 
+app.on('before-quit', () => {
+  forceQuit = true;
+});
+
+// Initialize app
+app.whenReady().then(() => {
+  createWindow();
+  createTray();
+}); 

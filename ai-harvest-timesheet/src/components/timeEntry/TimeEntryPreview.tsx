@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ipcRenderer } from 'electron';
 import { 
   Box, 
   Typography, 
@@ -171,6 +172,24 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     
     setProcessedCommits(newProcessedCommits);
   }, [commits, repositories, getEffectivePreferences]);
+
+  // Update tray menu with today's hours
+  useEffect(() => {
+    const todaysCommits = Object.values(processedCommits)
+      .flat()
+      .filter(commit => {
+        const commitDate = new Date(commit.date);
+        const today = new Date();
+        return (
+          commitDate.getDate() === today.getDate() &&
+          commitDate.getMonth() === today.getMonth() &&
+          commitDate.getFullYear() === today.getFullYear()
+        );
+      });
+
+    const totalHours = todaysCommits.reduce((sum, commit) => sum + (commit.hours || 0), 0);
+    ipcRenderer.send('update-hours', totalHours);
+  }, [processedCommits]);
 
   const validateHours = (repoPath: string, newHours: number, currentCommit: CommitInfo) => {
     const repository = repositories.find(repo => repo.path === repoPath);

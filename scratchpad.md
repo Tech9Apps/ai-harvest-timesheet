@@ -482,3 +482,122 @@ Implementing comprehensive testing:
    - [ ] Preferences Service
 3. [ ] Add integration tests for main workflows
 4. [ ] Test error scenarios and recovery mechanisms
+
+# Current Task: Implement Daily Time Logging Notifications
+
+## Feature Overview
+Add simple daily notifications to remind users to log their time, configurable with:
+- Notification time
+- Weekday-only notifications (no weekends)
+- Enable/disable option
+
+## Implementation Plan
+
+### 1. Update Preferences
+[X] Add new notification preferences:
+   - enableDailyReminder (boolean)
+   - reminderTime (string - HH:mm format)
+
+### 2. Notification System
+[ ] Core functionality:
+   - Schedule notifications for configured time
+   - Skip weekends automatically
+   - Use native OS notifications
+   - Include direct action link to open app
+
+### 3. Technical Components Needed
+[ ] Backend (electron/main.ts):
+   - Node-schedule for timing
+   - Electron notifications
+   - IPC communication for preferences
+
+[ ] Frontend:
+   - Notification settings UI in preferences
+   - Time picker component
+   - Enable/disable toggle
+
+### 4. UI Changes
+[ ] Add to GeneralSettings tab:
+   - "Daily Reminders" section
+   - Time picker input
+   - Enable/disable switch
+   - Simple description text
+
+## Implementation Steps
+1. [ ] Add notification preferences to types
+2. [ ] Update preferences storage
+3. [ ] Add notification settings UI
+4. [ ] Implement notification scheduler
+5. [ ] Add notification click handler
+6. [ ] Test notification system
+
+## Technical Notes
+- Use electron's native notification API
+- Store notification preferences in user settings
+- Implement proper cleanup for notification scheduler
+- Handle app startup/shutdown gracefully
+- Consider timezone handling
+
+## Minimal Scope
+- Single notification time
+- Simple on/off toggle
+- Weekday-only logic
+- Basic notification message
+- Click to open app
+
+# Current Task: Implement Tray Menu Functionality
+
+## Feature Overview
+Add system tray functionality to the application with:
+- Minimize to tray when closing window
+- Quick access to app features
+- Status information display
+
+## Implementation Plan
+
+### 1. Core Tray Features
+[ ] Basic tray setup:
+   - Tray icon implementation
+   - Basic menu structure
+   - Window show/hide functionality
+   - Quit application option
+
+### 2. Status Information
+[ ] Add status display:
+   - Today's logged hours
+   - Last sync status
+   - Current repository count
+
+### 3. Quick Actions
+[ ] Implement menu actions:
+   - Sync time entries
+   - Refresh commits
+   - Open preferences
+   - Show/hide main window
+
+### 4. Window Behavior
+[ ] Implement window management:
+   - Minimize to tray on window close
+   - Show from tray on icon click
+   - Proper window state tracking
+
+### 5. Visual Elements
+[ ] Design and implement:
+   - Tray icon (light/dark modes)
+   - Status icons for sync state
+   - Tooltip information
+   - Menu item organization
+
+## Technical Notes
+- Use Electron's Tray and Menu APIs
+- Implement proper window state management
+- Handle IPC communication for status updates
+- Support both light and dark mode tray icons
+- Ensure proper cleanup on app quit
+
+## Minimal Scope
+- Basic tray icon
+- Show/hide window
+- Quit application
+- Essential status information
+- Core quick actions
