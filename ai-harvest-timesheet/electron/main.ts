@@ -174,25 +174,6 @@ function updateTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: 'Sync Time Entries',
-      click: () => {
-        win?.webContents.send('tray-action', 'sync');
-      }
-    },
-    {
-      label: 'Refresh Commits',
-      click: () => {
-        win?.webContents.send('tray-action', 'refresh');
-      }
-    },
-    {
-      label: 'Open Preferences',
-      click: () => {
-        win?.webContents.send('tray-action', 'preferences');
-      }
-    },
-    { type: 'separator' },
-    {
       label: 'Quit',
       click: () => {
         forceQuit = true;
@@ -230,6 +211,9 @@ function createWindow() {
     },
     show: false, // Don't show the window until it's ready
   });
+
+  // Set window to be visible on all workspaces (helps with fullscreen app menu visibility)
+  win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
