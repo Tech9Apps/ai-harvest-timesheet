@@ -6,7 +6,8 @@
   "productName": "Harvest Timesheet",
   "icon": "assets/icons/icon.icns",
   "directories": {
-    "output": "release/${version}"
+    "output": "release/${version}",
+    "buildResources": "assets"
   },
   "files": [
     "dist",

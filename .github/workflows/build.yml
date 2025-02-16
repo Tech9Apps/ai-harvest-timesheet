@@ -42,7 +42,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          DEBUG: electron-builder
 
       # Build and release executables
       - name: Build and release
@@ -50,18 +49,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          DEBUG: electron-builder
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
 
       # List build output
       - name: List build output
         run: |
           echo "Build output contents:"
-          ls -la release/
-          echo "DMG files:"
-          find release -name "*.dmg"
-          echo "ZIP files:"
-          find release -name "*.zip"
+          ls -la
+          echo "\nRelease directory structure:"
+          ls -R release/
+          echo "\nFull path of release files:"
+          find . -type f -name "*.dmg" -o -name "*.zip"
 
       # Upload artifacts
       - name: Upload artifacts
@@ -69,8 +67,8 @@ jobs:
         with:
           name: macos-build
           path: |
-            ai-harvest-timesheet/release/**/*.dmg
-            ai-harvest-timesheet/release/**/*.zip
+            ai-harvest-timesheet/release/*/*.dmg
+            ai-harvest-timesheet/release/*/*.zip
           if-no-files-found: error
 
   release:
@@ -88,17 +86,19 @@ jobs:
       - name: List files
         run: |
           pwd
-          echo "Release directory contents:"
+          echo "Current directory contents:"
+          ls -la
+          echo "\nRelease directory structure:"
           ls -R release/
-          echo "Found files:"
-          find release -type f
+          echo "\nFound release files:"
+          find . -type f -name "*.dmg" -o -name "*.zip"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/**/*.dmg
-            release/**/*.zip
+            release/*/*.dmg
+            release/*/*.zip
           draft: true
           prerelease: false
           generate_release_notes: true
