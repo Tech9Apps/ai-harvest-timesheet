@@ -19,6 +19,11 @@
       "filter": ["**/*"]
     }
   ],
+  "publish": {
+    "provider": "github",
+    "owner": "surajadsul",
+    "repo": "ai-harvest-timesheet"
+  },
   "mac": {
     "target": [
       {

@@ -12,6 +12,12 @@ on:
         default: false
         required: true
 
+# Add permissions block
+permissions:
+  contents: write
+  packages: write
+  issues: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -42,6 +48,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          DEBUG: electron-builder
 
       # Build and release executables
       - name: Build and release
@@ -49,6 +56,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          DEBUG: electron-builder
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
 
       # List build output
