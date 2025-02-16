@@ -21,8 +21,10 @@
   ],
   "publish": {
     "provider": "github",
-    "owner": "surajadsul",
-    "repo": "ai-harvest-timesheet"
+    "owner": "Tech9Apps",
+    "repo": "ai-harvest-timesheet",
+    "private": true,
+    "releaseType": "draft"
   },
   "mac": {
     "target": [
