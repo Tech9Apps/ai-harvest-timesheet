@@ -177,3 +177,52 @@
 - Data persistence layer enhanced with proper error handling
 - Repository management enhanced with enable/disable functionality
 - Focus shifted to testing and error handling improvements
+
+## Changelog (v1.0.4 to Current)
+
+### Features
+- Added tray menu functionality with billable hours display
+- Added daily reminder for time log
+- Added quick reset button for setting 8 hours
+- Added external reference support for Github and Jira issues
+- Added visibility toggle for access token input
+- Added distribution strategies based on commit size
+- Added custom hours setting for daily enforcement
+
+### UI/UX Improvements
+- Improved tray menu design and functionality
+- Updated layout and UI components
+- Enhanced colors and fonts
+- Improved time format display
+- Implemented tabular layout for time preferences
+- Simplified UI by removing per repository features
+
+### Bug Fixes
+- Fixed tray menu issues
+- Fixed build step to include icon
+- Fixed validations
+- Fixed repository enable/disable functionality
+- Fixed logged hours functionality
+- Fixed tray show/hide behavior
+- Fixed double loader issue
+- Fixed issues with custom time frame
+
+### Documentation
+- Updated README with new features and instructions
+- Added license
+- Updated project documentation
+- Added icons and visual assets
+
+### Technical Improvements
+- Implemented file storage for credentials
+- Added refresh hour functionality
+- Updated message formatting
+- Added support for custom regex selection
+- Improved notification system
+- Enhanced build and deployment configuration
+
+### Other Changes
+- Removed unused menus
+- Improved menu rendering on fullscreen apps
+- Updated icon assets
+- Various code cleanup and optimization
