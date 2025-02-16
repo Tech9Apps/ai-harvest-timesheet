@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { GlobalPreferences, RepositoryPreferences } from '../types/preferences';
 import { preferencesService } from '../services/preferencesService';
 
@@ -9,6 +9,8 @@ interface PreferencesContextType {
   updateRepositoryPreferences: (repositoryId: string, preferences: Partial<RepositoryPreferences>) => void;
   resetRepositoryToGlobal: (repositoryId: string) => void;
   getEffectivePreferences: (repositoryId: string) => GlobalPreferences;
+  preferences: GlobalPreferences;
+  updatePreferences: (preferences: Partial<GlobalPreferences>) => void;
 }
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
@@ -26,6 +28,10 @@ export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({ childr
   const [repositoryPreferencesCache, setRepositoryPreferencesCache] = useState<{
     [repositoryId: string]: RepositoryPreferences;
   }>({});
+
+  const [preferences, setPreferences] = useState<GlobalPreferences>(
+    preferencesService.getGlobalPreferences()
+  );
 
   const updateGlobalPreferences = useCallback((preferences: Partial<GlobalPreferences>) => {
     const newPreferences = { ...globalPreferences, ...preferences };
@@ -73,6 +79,15 @@ export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({ childr
     return preferencesService.getEffectivePreferences(repositoryId);
   }, []);
 
+  const updatePreferences = (newPreferences: Partial<GlobalPreferences>) => {
+    const updatedPreferences = {
+      ...preferences,
+      ...newPreferences,
+    };
+    setPreferences(updatedPreferences);
+    preferencesService.setGlobalPreferences(updatedPreferences);
+  };
+
   const value = {
     globalPreferences,
     updateGlobalPreferences,
@@ -80,6 +95,8 @@ export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({ childr
     updateRepositoryPreferences,
     resetRepositoryToGlobal,
     getEffectivePreferences,
+    preferences,
+    updatePreferences,
   };
 
   return (

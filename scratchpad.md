@@ -1,77 +1,42 @@
 # Current Task
-Create an Electron-Vite with React application for automating time logging in Harvest based on Git commit history.
+Setting up and implementing testing infrastructure for the application.
 
-## Project Analysis
-The project requires building a desktop application that will:
-1. Allow users to manage local Git repositories
-2. Integrate with Harvest API for time tracking
-3. Process Git commit history
-4. Create time entries in Harvest based on commits
-5. Provide a user-friendly interface with Material UI and dark theme
+## Progress
+1. ✓ Set up basic test environment
+2. ✓ Identified critical test paths
+3. ✓ Prepared test structure for core services
+4. ✓ Documented test scenarios
+5. [ ] Implementing core service tests:
+   - [ ] Repository management service
+   - [ ] Git service
+   - [ ] Harvest API service
+   - [ ] Storage service
+   - [ ] Distribution service
 
-## Technical Stack
-- Electron-Vite with React for the desktop application
-- TypeScript for type safety
-- Simple-git for Git operations
-- Axios for API calls
-- LowDB for local data storage
-- dotenv for environment variables
-- Material UI for components
-- Node-keytar for secure token storage
-
-## Implementation Progress
-[x] 1. Project Setup
-    [x] Initialize Electron-Vite with React project
-    [x] Configure TypeScript
-    [x] Set up project structure
-    [x] Add required dependencies
-    [x] Configure Material UI with dark theme
-
-[x] 2. Core Features Implementation
-    [x] Repository Management
-        [x] Add single repository with validation
-        [x] Store repository settings
-        [x] Git repository validation logic
-        [x] Improve repository path input with helper text
-    [x] Harvest API Integration
-        [x] Token input UI
-        [x] Secure token storage
-        [x] Project/Task fetching from user assignments
-    [x] Git Integration
-        [x] Commit history processing
-        [x] Time calculation logic
-        [x] Custom date range selection
-        [x] Flexible commit filtering
-    [x] Time Entry Creation
-        [x] Preview interface
-        [x] Sync functionality
-        [x] Error handling
-
-[x] 3. User Interface
-    [x] Material UI setup with dark theme
-    [x] Repository management UI
-    [x] Token input and management UI
-    [x] Project/Task selection UI
-    [x] Time entry preview UI
-        [x] Date range selector component
-        [x] Today/Custom range toggle
-        [x] Date validation and constraints
-    [x] Sync button and status
-    [x] Error messages and notifications
-    [x] Loading states and progress indicators
-
-[ ] 4. Testing & Documentation
-    [ ] Basic testing setup
-    [x] User documentation
-    [x] Code documentation
+## Current Status
+Basic test environment has been set up and critical test paths have been identified. Moving forward with implementing tests for core services.
 
 ## Next Steps
-1. Set up testing environment
-2. Implement error boundary
-3. Add input validation
-4. Add more comprehensive error handling
+1. [ ] Core Service Tests:
+   - [ ] Write unit tests for repository management
+   - [ ] Add tests for Git operations
+   - [ ] Implement Harvest API service tests
+   - [ ] Add storage service tests
+   - [ ] Test distribution service functionality
 
-# Lessons Learned
+2. [ ] Integration Tests:
+   - [ ] Test repository and Git integration
+   - [ ] Test Harvest API integration
+   - [ ] Test time entry creation workflow
+   - [ ] Test hour distribution scenarios
+
+3. [ ] Component Tests:
+   - [ ] Test UI components
+   - [ ] Test loading states
+   - [ ] Test error handling
+   - [ ] Test user interactions
+
+# Lessons
 1. Environment Variables:
    - Use `import.meta.env` instead of `process.env` in Vite applications
    - Prefix environment variables with `VITE_` for client-side access
@@ -482,3 +447,118 @@ Implementing comprehensive testing:
    - [ ] Preferences Service
 3. [ ] Add integration tests for main workflows
 4. [ ] Test error scenarios and recovery mechanisms
+
+# Current Task: Implement Daily Time Logging Notifications
+
+## Feature Overview
+Add simple daily notifications to remind users to log their time, configurable with:
+- Notification time
+- Weekday-only notifications (no weekends)
+- Enable/disable option
+
+## Implementation Plan
+
+### 1. Update Preferences
+[X] Add new notification preferences:
+   - enableDailyReminder (boolean)
+   - reminderTime (string - HH:mm format)
+   - Added DEFAULT_NOTIFICATION_PREFERENCES
+
+### 2. Notification System
+[X] Core functionality:
+   - Schedule notifications for configured time
+   - Skip weekends automatically
+   - Use native OS notifications
+   - Include direct action link to open app
+
+### 3. Technical Components
+[X] Backend (electron/main.ts):
+   - Added notification scheduler
+   - Added IPC communication for preferences
+   - Added notification click handler
+
+[X] Frontend:
+   - Added notification settings UI in preferences
+   - Added time picker component
+   - Added enable/disable toggle
+   - Added IPC communication
+
+## Status
+✓ Task completed successfully
+- Notification system implemented
+- Settings UI added to preferences
+- Weekday-only notifications working
+- Click-to-open functionality working
+
+## Next Steps
+[ ] Test the notification system:
+   - Test enabling/disabling notifications
+   - Test changing notification time
+   - Test weekend skipping
+   - Test click-to-open functionality
+
+# Lessons
+12. Notification System:
+    - Use native OS notifications for better integration
+    - Keep notification messages simple and actionable
+    - Provide clear settings UI for configuration
+    - Handle weekends and off-hours appropriately
+    - Ensure proper cleanup of schedulers
+    - Use IPC for communication between main and renderer
+
+# Current Task: Implement Tray Menu Functionality
+
+## Feature Overview
+Add system tray functionality to the application with:
+- Minimize to tray when closing window
+- Quick access to app features
+- Status information display
+
+## Implementation Plan
+
+### 1. Core Tray Features
+[ ] Basic tray setup:
+   - Tray icon implementation
+   - Basic menu structure
+   - Window show/hide functionality
+   - Quit application option
+
+### 2. Status Information
+[ ] Add status display:
+   - Today's logged hours
+   - Last sync status
+   - Current repository count
+
+### 3. Quick Actions
+[ ] Implement menu actions:
+   - Sync time entries
+   - Refresh commits
+   - Open preferences
+   - Show/hide main window
+
+### 4. Window Behavior
+[ ] Implement window management:
+   - Minimize to tray on window close
+   - Show from tray on icon click
+   - Proper window state tracking
+
+### 5. Visual Elements
+[ ] Design and implement:
+   - Tray icon (light/dark modes)
+   - Status icons for sync state
+   - Tooltip information
+   - Menu item organization
+
+## Technical Notes
+- Use Electron's Tray and Menu APIs
+- Implement proper window state management
+- Handle IPC communication for status updates
+- Support both light and dark mode tray icons
+- Ensure proper cleanup on app quit
+
+## Minimal Scope
+- Basic tray icon
+- Show/hide window
+- Quit application
+- Essential status information
+- Core quick actions

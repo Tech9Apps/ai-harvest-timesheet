@@ -15,6 +15,7 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { harvestApi } from '../../services/harvestApi';
 import { useLoading } from '../../context/LoadingContext';
+import { ipcRenderer } from 'electron';
 
 interface HarvestCredentialsDialogProps {
   open: boolean;
@@ -34,10 +35,10 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
   useEffect(() => {
     if (open) {
       // Load existing credentials when dialog opens
-      const savedToken = localStorage.getItem('harvest_access_token') || '';
-      const savedAccountId = localStorage.getItem('harvest_account_id') || '';
-      setAccessToken(savedToken);
-      setAccountId(savedAccountId);
+      ipcRenderer.invoke('get-harvest-credentials').then(({ token, accountId }) => {
+        setAccessToken(token || '');
+        setAccountId(accountId || '');
+      });
       setError(null);
       setShowToken(false);
     }
@@ -51,30 +52,32 @@ export const HarvestCredentialsDialog: React.FC<HarvestCredentialsDialogProps> =
 
     setLoading(true);
     try {
-      // Set the credentials
+      // Set the credentials in the API service
       harvestApi.setCredentials(accessToken, accountId);
       
       // Test the credentials by trying to fetch projects
       await harvestApi.getProjects();
 
-      // If successful, save the credentials
-      localStorage.setItem('harvest_access_token', accessToken);
-      localStorage.setItem('harvest_account_id', accountId);
+      // If successful, save the credentials in the main process
+      ipcRenderer.send('set-harvest-credentials', { token: accessToken, accountId });
+      
+      // Wait a brief moment for the credentials to be set in the main process
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       onClose();
     } catch (error) {
+      console.error('[HarvestCredentialsDialog] Error saving credentials:', error);
       setError('Invalid credentials. Please check your access token and account ID.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    // Only allow closing if we have valid credentials stored
-    const savedToken = localStorage.getItem('harvest_access_token');
-    const savedAccountId = localStorage.getItem('harvest_account_id');
+  const handleCancel = async () => {
+    // Only allow closing if we have valid credentials
+    const { hasCredentials } = await ipcRenderer.invoke('get-harvest-credentials');
     
-    if (savedToken && savedAccountId) {
+    if (hasCredentials) {
       onClose();
     } else {
       setError('Please provide valid credentials before closing');

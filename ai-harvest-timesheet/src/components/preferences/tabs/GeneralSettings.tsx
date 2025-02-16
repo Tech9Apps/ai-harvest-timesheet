@@ -4,7 +4,6 @@ import {
   FormControlLabel,
   Switch,
   Typography,
-  Divider,
   TextField,
   InputAdornment,
   IconButton,
@@ -100,8 +99,6 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
         </Box>
       </Box>
 
-      <Divider sx={{ my: 2 }} />
-
       <Box sx={{ mb: 3 }}>
         <FormControlLabel
           control={
@@ -121,8 +118,6 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
           }
         />
       </Box>
-
-      <Divider sx={{ my: 2 }} />
 
       <Box sx={{ mb: 3 }}>
         <FormControlLabel

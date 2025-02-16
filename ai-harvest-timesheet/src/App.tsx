@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Container, Box, Alert, Snackbar, Button } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import MainLayout from './components/layout/MainLayout';
 import { RepositoryManager } from './components/repository/RepositoryManager';
 import { TimeEntryPreview } from './components/timeEntry/TimeEntryPreview';
@@ -12,6 +14,8 @@ import { LoadingProvider } from './context/LoadingContext';
 import { webhookService } from './services/webhookService';
 import { PreferencesProvider } from './context/PreferencesContext';
 import { GlobalPreferencesDialog } from './components/preferences/GlobalPreferencesDialog';
+import { ipcRenderer } from 'electron';
+import { NotificationSettingsDialog } from './components/notifications/NotificationSettingsDialog';
 
 function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -20,60 +24,28 @@ function App() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
   const [showGlobalPreferences, setShowGlobalPreferences] = useState(false);
-
-  useEffect(() => {
-    // Load repositories from storage
-    const savedRepositories = storageService.getRepositories();
-    setRepositories(savedRepositories);
-
-    // Load Harvest credentials from localStorage
-    const token = localStorage.getItem('harvest_access_token');
-    const accountId = localStorage.getItem('harvest_account_id');
-
-    if (token && accountId) {
-      harvestApi.setCredentials(token, accountId);
-    } else {
-      setShowCredentialsDialog(true);
-    }
-
-    // Initial fetch of commits
-    handleFetchCommits();
-  }, []);
-
-  const handleAddRepository = (repository: Repository) => {
-    const updatedRepositories = storageService.addRepository({
-      ...repository,
-      extractTicketNumber: true,
-      enabled: true, // Ensure new repositories are enabled by default
-    });
-    setRepositories(updatedRepositories);
-    setSuccess('Repository added successfully');
-    handleFetchCommits();
-  };
-
-  const handleUpdateRepository = (updatedRepo: Repository) => {
-    const updatedRepositories = storageService.updateRepository(updatedRepo);
-    setRepositories(updatedRepositories);
-    setSuccess('Repository settings updated successfully');
-    handleFetchCommits(); // Refresh commits to update formatting
-  };
-
-  const handleDeleteRepository = (repositoryId: string) => {
-    const updatedRepositories = storageService.deleteRepository(repositoryId);
-    setRepositories(updatedRepositories);
-    setSuccess('Repository removed successfully');
-  };
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const handleFetchCommits = async (startDate?: Date, endDate?: Date) => {
+    console.log('[App] Starting to fetch commits', { 
+      repositoryCount: repositories.length,
+      enabledCount: repositories.filter(repo => repo.enabled).length 
+    });
+    
+    // Reset commits state before fetching new ones
+    setCommits({});
     const newCommits: { [repoPath: string]: CommitInfo[] } = {};
     
     try {
       // First, fetch all commits from enabled repositories only
       for (const repository of repositories.filter(repo => repo.enabled)) {
+        console.log('[App] Processing repository:', repository.path);
         const gitService = new GitService(repository);
         const isValid = await gitService.validateRepository();
         
         if (!isValid) {
+          console.error('[App] Invalid repository:', repository.path);
           setError(`Invalid repository: ${repository.path}`);
           continue;
         }
@@ -84,6 +56,11 @@ function App() {
         } else {
           commits = await gitService.getTodayCommits();
         }
+
+        console.log('[App] Found commits for repository:', {
+          path: repository.path,
+          commitCount: commits.length
+        });
 
         if (commits.length > 0) {
           newCommits[repository.path] = commits;
@@ -123,6 +100,11 @@ function App() {
         }
       }
 
+      console.log('[App] Commit fetch completed', {
+        repositoriesWithCommits: Object.keys(newCommits).length,
+        totalCommits: Object.values(newCommits).reduce((sum, commits) => sum + commits.length, 0)
+      });
+
       setCommits(newCommits);
       if (Object.keys(newCommits).length === 0) {
         setSuccess('No commits found for the selected period');
@@ -130,9 +112,126 @@ function App() {
         setSuccess('Commits fetched successfully');
       }
     } catch (error) {
+      console.error('[App] Error fetching commits:', error);
       setError('Error fetching commits');
-      console.error('Error fetching commits:', error);
     }
+  };
+
+  useEffect(() => {
+    async function initialize() {
+      console.log('[App] Starting initialization');
+      
+      try {
+        // Load repositories from storage
+        const savedRepositories = storageService.getRepositories();
+        console.log('[App] Loaded repositories:', {
+          count: savedRepositories.length,
+          enabled: savedRepositories.filter(r => r.enabled).length
+        });
+        
+        // Load Harvest credentials from main process
+        const { token, accountId, hasCredentials } = await ipcRenderer.invoke('get-harvest-credentials');
+        console.log('[App] Checked credentials:', { hasCredentials });
+
+        if (token && accountId) {
+          console.log('[App] Setting credentials in API service');
+          harvestApi.setCredentials(token, accountId);
+        }
+
+        // Set repositories first
+        setRepositories(savedRepositories);
+        
+        if (!hasCredentials) {
+          console.log('[App] No credentials found, showing dialog');
+          setShowCredentialsDialog(true);
+        }
+
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('[App] Error during initialization:', error);
+        setError('Error initializing application');
+      }
+    }
+
+    initialize();
+
+    // Listen for tray actions
+    const handleTrayAction = (_event: any, action: string) => {
+      console.log('[App] Received tray action:', action);
+      switch (action) {
+        case 'refresh':
+          handleFetchCommits();
+          break;
+        case 'sync':
+          // You might want to trigger sync here if needed
+          break;
+        case 'preferences':
+          setShowGlobalPreferences(true);
+          break;
+      }
+    };
+
+    ipcRenderer.on('tray-action', handleTrayAction);
+
+    // Listen for app reset
+    const handleAppReset = () => {
+      console.log('[App] Handling application reset');
+      setRepositories([]);
+      setCommits({});
+      setShowCredentialsDialog(true);
+      setSuccess('Application has been reset successfully');
+    };
+
+    ipcRenderer.on('app-reset', handleAppReset);
+
+    return () => {
+      ipcRenderer.removeListener('tray-action', handleTrayAction);
+      ipcRenderer.removeListener('app-reset', handleAppReset);
+    };
+  }, []);
+
+  // Separate effect to handle fetching commits after repositories are loaded
+  useEffect(() => {
+    if (repositories.length > 0) {
+      console.log('[App] Repositories loaded, fetching commits');
+      handleFetchCommits();
+    }
+  }, [repositories]);
+
+  const handleAddRepository = (repository: Repository) => {
+    const updatedRepositories = storageService.addRepository({
+      ...repository,
+      extractTicketNumber: true,
+      enabled: true, // Ensure new repositories are enabled by default
+    });
+    setRepositories(updatedRepositories);
+    setSuccess('Repository added successfully');
+    handleFetchCommits();
+  };
+
+  const handleUpdateRepository = (updatedRepo: Repository) => {
+    const updatedRepositories = storageService.updateRepository(updatedRepo);
+    setRepositories(updatedRepositories);
+
+    // If repository is being disabled, remove its commits
+    if (!updatedRepo.enabled) {
+      setCommits(prevCommits => {
+        const newCommits = { ...prevCommits };
+        delete newCommits[updatedRepo.path];
+        return newCommits;
+      });
+      setSuccess('Repository disabled');
+    } else {
+      // If repository is being enabled, fetch its commits
+      handleFetchCommits();
+      setSuccess('Repository enabled');
+    }
+  };
+
+  const handleDeleteRepository = (repositoryId: string) => {
+    const updatedRepositories = storageService.deleteRepository(repositoryId);
+    setRepositories(updatedRepositories);
+    setSuccess('Repository removed successfully');
   };
 
   const handleSync = async (timeEntries: TimeEntry[]) => {
@@ -168,17 +267,19 @@ function App() {
         delete updatedCommits[path];
       });
       setCommits(updatedCommits);
+
+      // Trigger a refresh of Harvest hours in the main process
+      ipcRenderer.send('refresh-harvest-hours');
     } catch (error) {
       setError('Error syncing time entries');
       console.error('Error syncing time entries:', error);
     }
   };
 
-  const handleCredentialsDialogClose = () => {
+  const handleCredentialsDialogClose = async () => {
     // Only close the dialog if we have valid credentials
-    const token = localStorage.getItem('harvest_access_token');
-    const accountId = localStorage.getItem('harvest_account_id');
-    if (token && accountId) {
+    const { hasCredentials } = await ipcRenderer.invoke('get-harvest-credentials');
+    if (hasCredentials) {
       setShowCredentialsDialog(false);
     }
   };
@@ -187,77 +288,124 @@ function App() {
     setShowCredentialsDialog(true);
   };
 
+  const handleReset = async () => {
+    if (window.confirm('Are you sure you want to reset the application? This will clear all settings and credentials.')) {
+      try {
+        // Clear all storage
+        storageService.clearAll();
+        console.log('[App] Cleared all storage');
+
+        // Reset main process data
+        const success = await ipcRenderer.invoke('reset-application');
+        if (success) {
+          // Clear local state
+          setRepositories([]);
+          setCommits({});
+          setShowCredentialsDialog(true);
+          setSuccess('Application has been reset successfully');
+        } else {
+          setError('Failed to reset application');
+        }
+      } catch (error) {
+        console.error('[App] Error resetting application:', error);
+        setError('Failed to reset application');
+      }
+    }
+  };
+
   return (
     <PreferencesProvider>
       <LoadingProvider>
-        <MainLayout>
-          <Container maxWidth="lg">
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
-              <Button
-                variant="outlined"
-                onClick={() => setShowGlobalPreferences(true)}
-                size="small"
-              >
-                Time Preferences
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={handleOpenCredentialsDialog}
-                size="small"
-              >
-                Update Harvest Credentials
-              </Button>
-            </Box>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <MainLayout>
+            <Container maxWidth="lg">
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowGlobalPreferences(true)}
+                  size="small"
+                >
+                  Time Preferences
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowNotificationSettings(true)}
+                  size="small"
+                >
+                  Notifications
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleOpenCredentialsDialog}
+                  size="small"
+                >
+                  Update Harvest Credentials
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleReset}
+                  size="small"
+                >
+                  Reset Application
+                </Button>
+              </Box>
 
-            <Box sx={{ my: 4 }}>
-              <RepositoryManager
-                repositories={repositories}
-                onRepositoryAdd={handleAddRepository}
-                onRepositoryUpdate={handleUpdateRepository}
-                onRepositoryDelete={handleDeleteRepository}
+              <Box sx={{ my: 4 }}>
+                <RepositoryManager
+                  repositories={repositories}
+                  onRepositoryAdd={handleAddRepository}
+                  onRepositoryUpdate={handleUpdateRepository}
+                  onRepositoryDelete={handleDeleteRepository}
+                />
+              </Box>
+              
+              <Box sx={{ my: 4 }}>
+                <TimeEntryPreview
+                  commits={commits}
+                  repositories={repositories}
+                  onSync={handleSync}
+                  onRefresh={handleFetchCommits}
+                />
+              </Box>
+
+              <HarvestCredentialsDialog
+                open={showCredentialsDialog}
+                onClose={handleCredentialsDialogClose}
               />
-            </Box>
-            
-            <Box sx={{ my: 4 }}>
-              <TimeEntryPreview
-                commits={commits}
-                repositories={repositories}
-                onSync={handleSync}
-                onRefresh={handleFetchCommits}
+
+              <GlobalPreferencesDialog
+                open={showGlobalPreferences}
+                onClose={() => setShowGlobalPreferences(false)}
               />
-            </Box>
 
-            <HarvestCredentialsDialog
-              open={showCredentialsDialog}
-              onClose={handleCredentialsDialogClose}
-            />
+              <NotificationSettingsDialog
+                open={showNotificationSettings}
+                onClose={() => setShowNotificationSettings(false)}
+              />
 
-            <GlobalPreferencesDialog
-              open={showGlobalPreferences}
-              onClose={() => setShowGlobalPreferences(false)}
-            />
+              <Snackbar
+                open={!!error}
+                autoHideDuration={6000}
+                onClose={() => setError(null)}
+              >
+                <Alert severity="error" onClose={() => setError(null)}>
+                  {error}
+                </Alert>
+              </Snackbar>
 
-            <Snackbar
-              open={!!error}
-              autoHideDuration={6000}
-              onClose={() => setError(null)}
-            >
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
-              </Alert>
-            </Snackbar>
-
-            <Snackbar
-              open={!!success}
-              autoHideDuration={6000}
-              onClose={() => setSuccess(null)}
-            >
-              <Alert severity="success" onClose={() => setSuccess(null)}>
-                {success}
-              </Alert>
-            </Snackbar>
-          </Container>
-        </MainLayout>
+              <Snackbar
+                open={!!success}
+                autoHideDuration={6000}
+                onClose={() => setSuccess(null)}
+              >
+                <Alert severity="success" onClose={() => setSuccess(null)}>
+                  {success}
+                </Alert>
+              </Snackbar>
+            </Container>
+          </MainLayout>
+        </LocalizationProvider>
       </LoadingProvider>
     </PreferencesProvider>
   );

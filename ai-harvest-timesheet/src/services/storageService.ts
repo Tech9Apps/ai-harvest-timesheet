@@ -175,6 +175,16 @@ class StorageService {
       );
     }
   }
+
+  clearAll(): void {
+    try {
+      localStorage.clear();
+      console.log('[StorageService] All storage cleared successfully');
+    } catch (error) {
+      console.error('[StorageService] Error clearing storage:', error);
+      throw new Error('Failed to clear storage');
+    }
+  }
 }
 
 export const storageService = new StorageService(); 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ipcRenderer } from 'electron';
 import { 
   Box, 
   Typography, 
@@ -171,6 +172,24 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
     
     setProcessedCommits(newProcessedCommits);
   }, [commits, repositories, getEffectivePreferences]);
+
+  // Update tray menu with today's hours
+  useEffect(() => {
+    const todaysCommits = Object.values(processedCommits)
+      .flat()
+      .filter(commit => {
+        const commitDate = new Date(commit.date);
+        const today = new Date();
+        return (
+          commitDate.getDate() === today.getDate() &&
+          commitDate.getMonth() === today.getMonth() &&
+          commitDate.getFullYear() === today.getFullYear()
+        );
+      });
+
+    const totalHours = todaysCommits.reduce((sum, commit) => sum + (commit.hours || 0), 0);
+    ipcRenderer.send('update-hours', totalHours);
+  }, [processedCommits]);
 
   const validateHours = (repoPath: string, newHours: number, currentCommit: CommitInfo) => {
     const repository = repositories.find(repo => repo.path === repoPath);
@@ -470,23 +489,51 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
         }
       }
 
-      // Validate each repository's hours
-      for (const [repoPath, repoCommits] of Object.entries(dateCommits)) {
-        const repository = repositories.find(repo => repo.path === repoPath);
-        if (!repository) {
-          setError(`Unable to sync: Repository configuration not found for ${repoPath}`);
+      // Get preferences from any enabled repository for this day to check if cross-repo is enabled
+      const anyEnabledRepo = Object.keys(dateCommits)
+        .find(repoPath => repositories.find(repo => repo.path === repoPath)?.enabled);
+      
+      if (!anyEnabledRepo) {
+        setError(`Unable to sync: No enabled repositories found for ${format(parseISO(date), 'MMM dd, yyyy')}`);
+        return;
+      }
+
+      const preferences = getEffectivePreferences(anyEnabledRepo);
+
+      if (preferences.distributeAcrossRepositories) {
+        // When cross-repository distribution is enabled, validate total hours across all repositories
+        const totalDayHours = Object.values(dateCommits).reduce((sum, commits) => 
+          sum + commits.reduce((repoSum, commit) => repoSum + (commit.hours ?? 0), 0),
+          0
+        );
+
+        if ((totalDayHours - preferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE) {
+          setError(
+            `Unable to sync: Total hours for ${format(parseISO(date), 'MMM dd, yyyy')} ` +
+            `(${totalDayHours.toFixed(2)}) exceed the ${preferences.customHoursValue}-hour daily limit`
+          );
           return;
         }
-
-        const preferences = getEffectivePreferences(repository.path);
-        if (preferences.customEnforceHours) {
-          const totalRepoHours = repoCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
-          if ((totalRepoHours - preferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE) {
-            setError(
-              `Unable to sync: Total hours for ${repository.path.split('/').pop()} ` +
-              `(${totalRepoHours.toFixed(2)}) exceed the ${preferences.customHoursValue}-hour limit`
-            );
+      } else {
+        // When cross-repository distribution is disabled, validate each repository separately
+        for (const [repoPath, repoCommits] of Object.entries(dateCommits)) {
+          const repository = repositories.find(repo => repo.path === repoPath);
+          if (!repository) {
+            setError(`Unable to sync: Repository configuration not found for ${repoPath}`);
             return;
+          }
+
+          const repoPreferences = getEffectivePreferences(repository.path);
+          if (repoPreferences.customEnforceHours) {
+            const totalRepoHours = repoCommits.reduce((sum, commit) => sum + (commit.hours ?? 0), 0);
+            if ((totalRepoHours - repoPreferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE) {
+              setError(
+                `Unable to sync: Total hours for ${repository.path.split('/').pop()} ` +
+                `on ${format(parseISO(date), 'MMM dd, yyyy')} ` +
+                `(${totalRepoHours.toFixed(2)}) exceed the ${repoPreferences.customHoursValue}-hour limit`
+              );
+              return;
+            }
           }
         }
       }
@@ -645,14 +692,14 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                         <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                           Total: {totalDayHours.toFixed(2)} hours
                         </Typography>
-                        {dayPreferences?.customEnforceHours && 
+                        {dayPreferences?.customEnforceHours && dayPreferences.distributeAcrossRepositories && 
                           (totalDayHours - dayPreferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE && (
                           <>
                             <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               •
                             </Typography>
                             <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'error.light' }}>
-                              Exceeds {dayPreferences.customHoursValue}-hour limit
+                              Exceeds {dayPreferences.customHoursValue}-hour daily limit across repositories
                             </Typography>
                           </>
                         )}
@@ -692,11 +739,10 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                             <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                               {totalRepoHours.toFixed(2)} hours
                             </Typography>
-                            {!preferences?.distributeAcrossRepositories && 
-                              preferences?.customEnforceHours && 
+                            {preferences?.customEnforceHours && !preferences.distributeAcrossRepositories && 
                               (totalRepoHours - preferences.customHoursValue) > HOURS_COMPARISON_TOLERANCE && (
                               <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'error.light' }}>
-                                (Exceeds {preferences.customHoursValue}-hour limit)
+                                (Exceeds {preferences.customHoursValue}-hour repository limit)
                               </Typography>
                             )}
                           </Box>

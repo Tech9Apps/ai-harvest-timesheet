@@ -4,18 +4,48 @@
   "appId": "com.harvest.timesheet",
   "asar": true,
   "productName": "Harvest Timesheet",
+  "icon": "assets/icons/icon.icns",
   "directories": {
     "output": "release/${version}"
   },
   "files": [
     "dist",
-    "dist-electron"
+    "dist-electron",
+    "assets/**/*",
+    {
+      "from": "assets/tray-icons",
+      "to": "assets/tray-icons",
+      "filter": ["**/*"]
+    }
   ],
   "mac": {
     "target": [
-      "dmg"
+      {
+        "target": "dmg",
+        "arch": ["arm64", "x64"]
+      }
     ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "icon": "assets/icons/icon.icns",
+    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
+    "category": "public.app-category.productivity",
+    "hardenedRuntime": false,
+    "gatekeeperAssess": false,
+    "identity": null
+  },
+  "dmg": {
+    "icon": "assets/icons/icon.icns",
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
   },
   "win": {
     "target": [
