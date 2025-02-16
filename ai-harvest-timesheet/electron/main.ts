@@ -542,7 +542,8 @@ function scheduleDailyNotification(time: string) {
         body: notificationTestMode && isWeekend(now) 
           ? 'Test Mode: Weekend Notification' 
           : 'Remember to log your time for today!',
-        silent: false
+        silent: false,
+        icon: getAppIconPath(),
       });
 
       notification.show();
@@ -670,4 +671,26 @@ app.whenReady().then(() => {
       console.error('[Main] Error setting dock icon:', error);
     }
   }
+});
+
+// Add handler for test notifications
+ipcMain.on('test-notification', () => {
+  console.log('[Main] Showing test notification');
+  const notification = new Notification({
+    title: 'Test Notification',
+    body: 'This is a test notification. Click to open the app.',
+    silent: false,
+    icon: getAppIconPath(),
+  });
+
+  notification.show();
+
+  // Add click handler to open the app
+  notification.on('click', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      if (!win.isVisible()) win.show();
+      win.focus();
+    }
+  });
 }); 

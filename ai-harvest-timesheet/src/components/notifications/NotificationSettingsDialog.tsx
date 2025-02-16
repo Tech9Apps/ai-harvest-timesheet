@@ -14,6 +14,7 @@ import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { usePreferences } from '../../context/PreferencesContext';
+import { ipcRenderer } from 'electron';
 
 interface NotificationSettingsDialogProps {
   open: boolean;
@@ -46,6 +47,10 @@ export const NotificationSettingsDialog: React.FC<NotificationSettingsDialogProp
         enableDailyReminder: event.target.checked
       }
     });
+  };
+
+  const handleTestNotification = () => {
+    ipcRenderer.send('test-notification');
   };
 
   return (
@@ -85,6 +90,19 @@ export const NotificationSettingsDialog: React.FC<NotificationSettingsDialogProp
             </LocalizationProvider>
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
               Set the time when you would like to receive the daily reminder
+            </Typography>
+          </Box>
+
+          <Box sx={{ mt: 3 }}>
+            <Button 
+              variant="outlined" 
+              onClick={handleTestNotification}
+              disabled={!preferences.notifications?.enableDailyReminder}
+            >
+              Test Notification
+            </Button>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+              Send a test notification to verify your settings
             </Typography>
           </Box>
         </Box>
