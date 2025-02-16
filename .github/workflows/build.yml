@@ -12,7 +12,6 @@ on:
         default: false
         required: true
 
-# Add permissions block
 permissions:
   contents: write
   packages: write
@@ -38,17 +37,16 @@ jobs:
           cache-dependency-path: ai-harvest-timesheet/package-lock.json
 
       - name: Install dependencies
-        run: |
-          npm install
+        run: npm install
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
-      - name: Build application
-        run: npm run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-          DEBUG: electron-builder
+      - name: Delete existing release assets
+        uses: andreaswilli/delete-release-assets-action@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', github.run_number) }}
+          deleteOnlyFromDrafts: false
 
       # Build and release executables
       - name: Build and release
@@ -72,24 +70,14 @@ jobs:
           echo "\nSearching for ZIP files:"
           find . -name "*.zip"
 
-      # List build output
-      - name: List build output
-        run: |
-          echo "Build output contents:"
-          ls -la
-          echo "\nRelease directory structure:"
-          ls -R release/
-          echo "\nFull path of release files:"
-          find . -type f -name "*.dmg" -o -name "*.zip"
-
       # Upload artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
           path: |
-            ai-harvest-timesheet/release/*/*.dmg
-            ai-harvest-timesheet/release/*/*.zip
+            ai-harvest-timesheet/release/*.dmg
+            ai-harvest-timesheet/release/*.zip
           if-no-files-found: error
 
   release:
@@ -118,11 +106,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/*/*.dmg
-            release/*/*.zip
+            release/*.dmg
+            release/*.zip
           draft: true
           prerelease: false
           generate_release_notes: true
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', github.run_number) }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

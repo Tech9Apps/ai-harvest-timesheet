@@ -562,3 +562,31 @@ Add system tray functionality to the application with:
 - Quit application
 - Essential status information
 - Core quick actions
+
+# Current Task: GitHub Actions Release Asset Management
+
+## Progress
+[X] Integrated delete-release-assets-action
+   - Replaced custom implementation with specialized action
+   - Moved asset deletion before build step for cleaner process
+   - Configured to work with both draft and published releases
+   - Maintained existing tag name logic
+   - Uses proper GitHub token authentication
+
+## Current Status
+Successfully integrated and reordered the delete-release-assets-action in the GitHub Actions workflow. The action will now clean up existing assets before the build process begins, ensuring a clean slate for new releases.
+
+## Next Steps
+1. [ ] Test the workflow with a manual trigger
+2. [ ] Verify asset deletion works as expected
+3. [ ] Document the release process in project documentation
+
+# Lessons
+13. GitHub Actions:
+    - Use specialized actions when available instead of custom scripts
+    - Clean up existing assets before starting new builds
+    - Maintain consistent tag naming conventions
+    - Handle both draft and published releases appropriately
+    - Ensure proper token permissions are set
+    - Document release processes clearly
+    - Order workflow steps logically to prevent conflicts

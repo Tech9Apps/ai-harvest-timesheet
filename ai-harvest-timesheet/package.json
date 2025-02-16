@@ -1,7 +1,7 @@
 {
   "name": "ai-harvest-timesheet",
   "private": true,
-  "version": "1.0.8",
+  "version": "1.0.5",
   "description": "Automate time logging in Harvest based on Git commit history",
   "author": "Suraj Adsul",
   "main": "dist-electron/main.js",
@@ -22,7 +22,7 @@
     "appId": "com.harvest.timesheet",
     "productName": "Harvest Timesheet",
     "directories": {
-      "output": "release/${version}"
+      "output": "release"
     },
     "files": [
       "dist/**/*",
