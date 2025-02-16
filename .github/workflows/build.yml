@@ -12,11 +12,6 @@ on:
         default: false
         required: true
 
-permissions:
-  contents: write
-  packages: write
-  issues: write
-
 jobs:
   build:
     runs-on: macos-latest
@@ -37,38 +32,31 @@ jobs:
           cache-dependency-path: ai-harvest-timesheet/package-lock.json
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
-      - name: Delete existing release assets
-        uses: andreaswilli/delete-release-assets-action@v4.0.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', github.run_number) }}
-          deleteOnlyFromDrafts: false
+      - name: Build application
+        run: npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Build and release executables
       - name: Build and release
         run: npm run build:mac
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-          DEBUG: electron-builder
 
-      # Debug build output
-      - name: Debug build output
+      # List build output
+      - name: List build output
         run: |
-          echo "Current directory:"
-          pwd
-          echo "\nDirectory structure:"
-          ls -R
-          echo "\nRelease directory structure:"
-          find . -name "release" -type d -exec ls -R {} \;
-          echo "\nSearching for DMG files:"
-          find . -name "*.dmg"
-          echo "\nSearching for ZIP files:"
-          find . -name "*.zip"
+          echo "Build output contents:"
+          ls -la release/
+          echo "DMG files:"
+          find release -name "*.dmg"
+          echo "ZIP files:"
+          find release -name "*.zip"
 
       # Upload artifacts
       - name: Upload artifacts
@@ -76,8 +64,8 @@ jobs:
         with:
           name: macos-build
           path: |
-            ai-harvest-timesheet/release/*.dmg
-            ai-harvest-timesheet/release/*.zip
+            ai-harvest-timesheet/release/**/*.dmg
+            ai-harvest-timesheet/release/**/*.zip
           if-no-files-found: error
 
   release:
@@ -95,22 +83,20 @@ jobs:
       - name: List files
         run: |
           pwd
-          echo "Current directory contents:"
-          ls -la
-          echo "\nRelease directory structure:"
+          echo "Release directory contents:"
           ls -R release/
-          echo "\nFound release files:"
-          find . -type f -name "*.dmg" -o -name "*.zip"
+          echo "Found files:"
+          find release -type f
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/*.dmg
-            release/*.zip
+            release/**/*.dmg
+            release/**/*.zip
           draft: true
           prerelease: false
           generate_release_notes: true
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', github.run_number) }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
