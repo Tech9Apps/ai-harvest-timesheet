@@ -32,7 +32,7 @@ let harvestToken: string | null = null;
 let harvestAccountId: string | null = null;
 
 // Add test mode flag
-let notificationTestMode = true; // Set to true for testing
+let notificationTestMode = false; // Set to true for testing
 
 // Function to get the credentials file path
 function getCredentialsPath() {
@@ -525,7 +525,7 @@ function scheduleDailyNotification(time: string) {
 
     // Skip weekends only if not in test mode
     if (isWeekend(now) && !notificationTestMode) {
-      console.log('[Main] Skipping notification - weekend (disable test mode to skip weekends)');
+      // console.log('[Main] Skipping notification - weekend (disable test mode to skip weekends)');
       return;
     }
 
