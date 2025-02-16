@@ -57,7 +57,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           DEBUG: electron-builder
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+
+      # Debug build output
+      - name: Debug build output
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "\nDirectory structure:"
+          ls -R
+          echo "\nRelease directory structure:"
+          find . -name "release" -type d -exec ls -R {} \;
+          echo "\nSearching for DMG files:"
+          find . -name "*.dmg"
+          echo "\nSearching for ZIP files:"
+          find . -name "*.zip"
 
       # List build output
       - name: List build output

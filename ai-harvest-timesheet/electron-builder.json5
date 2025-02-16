@@ -24,7 +24,8 @@
     "owner": "Tech9Apps",
     "repo": "ai-harvest-timesheet",
     "private": true,
-    "releaseType": "draft"
+    "releaseType": "draft",
+    "publishAutoUpdate": false
   },
   "mac": {
     "target": [
@@ -38,7 +39,7 @@
       }
     ],
     "icon": "assets/icons/icon.icns",
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
+    "artifactName": "Harvest-Timesheet-Mac-${version}-Installer.${ext}",
     "category": "public.app-category.productivity",
     "hardenedRuntime": false,
     "gatekeeperAssess": false,

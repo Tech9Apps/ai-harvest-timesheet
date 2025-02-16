@@ -22,7 +22,7 @@
     "appId": "com.harvest.timesheet",
     "productName": "Harvest Timesheet",
     "directories": {
-      "output": "release"
+      "output": "release/${version}"
     },
     "files": [
       "dist/**/*",
