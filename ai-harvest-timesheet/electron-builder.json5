@@ -39,7 +39,7 @@
       }
     ],
     "icon": "assets/icons/icon.icns",
-    "artifactName": "Harvest-Timesheet-Mac-${version}-Installer.${ext}",
+    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
     "category": "public.app-category.productivity",
     "hardenedRuntime": false,
     "gatekeeperAssess": false,

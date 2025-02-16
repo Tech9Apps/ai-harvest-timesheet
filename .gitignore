@@ -1,3 +1,4 @@
 .DS_Store
 ai-harvest-timesheet/node_modules
 ai-harvest-timesheet/release
+.idea
