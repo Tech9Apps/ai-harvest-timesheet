@@ -11,7 +11,12 @@
   "files": [
     "dist",
     "dist-electron",
-    "assets/**/*"
+    "assets/**/*",
+    {
+      "from": "assets/tray-icons",
+      "to": "assets/tray-icons",
+      "filter": ["**/*"]
+    }
   ],
   "mac": {
     "target": [

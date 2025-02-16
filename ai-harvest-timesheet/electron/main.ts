@@ -214,8 +214,10 @@ function stopHarvestPolling() {
 function getIconPath(): string {
   const iconName = 'tray-icon.png';
   if (app.isPackaged) {
-    return join(process.resourcesPath, 'assets', 'tray-icons', iconName);
+    // In production, use path relative to the app.getAppPath()
+    return join(app.getAppPath(), 'assets', 'tray-icons', iconName);
   }
+  // In development
   return join(__dirname, '../assets/tray-icons', iconName);
 }
 
@@ -280,7 +282,13 @@ function updateTrayMenu() {
 
 function createTray() {
   // Create initial tray with default icon
-  const icon = nativeImage.createFromPath(getIconPath());
+  const iconPath = getIconPath();
+  console.log('[Main] Loading tray icon from:', iconPath);
+  
+  const icon = nativeImage.createFromPath(iconPath);
+  const sizes = icon.getSize();
+  console.log('[Main] Created tray icon with size:', sizes.width, 'x', sizes.height);
+  
   tray = new Tray(icon);
   tray.setToolTip('AI Harvest Timesheet');
 
