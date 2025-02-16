@@ -19,13 +19,6 @@
       ]
     }
   ],
-  "publish": {
-    "provider": "github",
-    "owner": "Tech9Apps",
-    "repo": "ai-harvest-timesheet",
-    "releaseType": "draft",
-    "private": false
-  },
   "mac": {
     "target": [
       {
@@ -44,7 +37,7 @@
       }
     ],
     "icon": "assets/icons/icon.icns",
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
+    "artifactName": "${productName}-Mac-${version}-${arch}-Installer.${ext}",
     "category": "public.app-category.productivity",
     "hardenedRuntime": false,
     "gatekeeperAssess": false,
