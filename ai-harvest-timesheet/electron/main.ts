@@ -259,16 +259,6 @@ function updateTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: 'Reset Application',
-      click: async () => {
-        const success = resetApplicationData();
-        if (success && win) {
-          win.show();
-        }
-      }
-    },
-    { type: 'separator' },
-    {
       label: 'Quit',
       click: () => {
         forceQuit = true;
