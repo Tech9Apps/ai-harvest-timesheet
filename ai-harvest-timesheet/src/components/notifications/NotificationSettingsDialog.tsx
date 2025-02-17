@@ -9,6 +9,7 @@ import {
   FormControlLabel,
   Switch,
   Typography,
+  Alert,
 } from '@mui/material';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -61,6 +62,20 @@ export const NotificationSettingsDialog: React.FC<NotificationSettingsDialogProp
           <Typography variant="body2" color="text.secondary" paragraph>
             Configure daily time logging reminders. Notifications will be shown on weekdays only.
           </Typography>
+
+          {process.platform === 'darwin' && (
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <Typography variant="body2">
+                To receive notifications on macOS, you need to allow them in System Settings:
+              </Typography>
+              <ol style={{ marginTop: 8, marginBottom: 0, paddingLeft: 16 }}>
+                <li>Open System Settings</li>
+                <li>Go to "Notifications"</li>
+                <li>Find "Harvest Timesheet" in the list</li>
+                <li>Enable notifications for the app</li>
+              </ol>
+            </Alert>
+          )}
 
           <FormControlLabel
             control={
