@@ -122,6 +122,12 @@ Basic test environment has been set up and critical test paths have been identif
     - Test edge cases and error conditions
     - Ensure proper cleanup after tests
 
+13. Electron Builder Configuration:
+   - Avoid using spaces in artifactName patterns to prevent duplicate builds
+   - Use explicit naming patterns instead of variables when file names need to be consistent
+   - Use lowercase and hyphens for artifact names to maintain consistency
+   - Be careful with ${productName} variable as it can cause unexpected behavior with spaces
+
 # Questions to Ask
 1. Should we implement user preferences for work hours (currently fixed at 8 hours)?
 2. How should we handle commits that span multiple days?
