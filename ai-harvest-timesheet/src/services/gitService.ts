@@ -120,7 +120,7 @@ export class GitService {
     }
     
     // Configuration files
-    const configExtensions = ['.json', '.yml', '.yaml', '.toml', '.ini', '.config'];
+    const configExtensions = ['.json', '.yml', '.yaml', '.toml', '.ini', '.config', '.env', '.properties'];
     if (configExtensions.some(ext => lowerFilename.endsWith(ext)) ||
         lowerFilename.includes('config') ||
         lowerFilename.includes('.env')) {
@@ -130,7 +130,8 @@ export class GitService {
     // Source code files
     const sourceExtensions = [
       '.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.cpp', '.c',
-      '.go', '.rb', '.php', '.cs', '.swift', '.kt', '.rs'
+      '.go', '.rb', '.php', '.cs', '.swift', '.kt', '.rs', '.dart', 
+      '.sql', '.css', '.html', '.htm'
     ];
     if (sourceExtensions.some(ext => lowerFilename.endsWith(ext))) {
       return 'source';
