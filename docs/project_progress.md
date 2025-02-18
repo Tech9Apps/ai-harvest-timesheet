@@ -135,6 +135,12 @@
   - [X] Formatted pattern descriptions
 
 ## Recent Updates
+- Enhanced time display UI
+  - Added hours and minutes format display (e.g., "3h 30m")
+  - Improved visual hierarchy with decimal hours
+  - Better aligned edit and reset controls
+  - Enhanced overall readability and usability
+  - Used consistent formatting with timeUtils functions
 - Enhanced error handling system
   - Added custom error classes for different scenarios
   - Implemented type-safe error handling
