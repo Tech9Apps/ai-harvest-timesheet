@@ -791,7 +791,7 @@ export const TimeEntryPreview: React.FC<TimeEntryPreviewProps> = ({
                                       sx={{ fontSize: '1rem', color: 'info.light' }}
                                     />
                                     <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-                                      {commit.branch}
+                                      {commit.branch} ({commit.hash.substring(0, 7)})
                                     </Typography>
                                   </Box>
                                   <Typography variant="body2" sx={{ fontSize: '0.875rem', color: 'text.primary' }}>

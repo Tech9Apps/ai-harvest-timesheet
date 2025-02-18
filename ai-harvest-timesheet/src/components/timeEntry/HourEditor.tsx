@@ -5,11 +5,13 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  Stack,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import RestoreIcon from '@mui/icons-material/Restore';
+import { formatHours } from '../../utils/timeUtils';
 
 interface HourEditorProps {
   hours: number;
@@ -125,29 +127,58 @@ export const HourEditor: React.FC<HourEditorProps> = ({
               sx={{
                 cursor: disabled ? 'default' : 'pointer',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: 0.5,
               }}
             >
-              <Typography
-                variant="body2"
-                sx={{
-                  color: isManuallySet ? 'primary.main' : 'text.primary',
-                  fontWeight: isManuallySet ? 500 : 400,
-                }}
-              >
-                {hours.toFixed(2)} hours
-              </Typography>
-              {!disabled && <EditIcon fontSize="small" sx={{ opacity: 0.5 }} />}
+              <Stack spacing={0}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: isManuallySet ? 'primary.main' : 'text.primary',
+                    fontWeight: isManuallySet ? 500 : 400,
+                    fontSize: '1rem',
+                  }}
+                >
+                  {formatHours(hours)}
+                </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 0.5,
+                  mt: '2px !important'
+                }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    {hours.toFixed(2)} hours
+                  </Typography>
+                  {!disabled && <EditIcon fontSize="small" sx={{ opacity: 0.5, fontSize: '0.9rem' }} />}
+                  {isManuallySet && onReset && (
+                    <Tooltip title="Reset to auto-calculated hours">
+                      <IconButton 
+                        size="small" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onReset();
+                        }}
+                        sx={{ 
+                          p: 0.5,
+                          ml: -0.5
+                        }}
+                      >
+                        <RestoreIcon sx={{ fontSize: '0.9rem' }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+              </Stack>
             </Box>
           </Tooltip>
-          {isManuallySet && onReset && (
-            <Tooltip title="Reset to auto-calculated hours">
-              <IconButton size="small" onClick={onReset}>
-                <RestoreIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
         </>
       )}
     </Box>
