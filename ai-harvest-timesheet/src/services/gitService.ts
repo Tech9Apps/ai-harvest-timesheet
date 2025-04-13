@@ -198,9 +198,14 @@ export class GitService {
         throw new Error('Could not determine current user');
       }
 
-      // Convert dates to Unix timestamps (seconds)
+      // Convert dates to UTC timestamps (seconds)
       const startTimestamp = Math.floor(since.getTime() / 1000);
       const endTimestamp = Math.floor(until.getTime() / 1000);
+
+      console.log('Git date range:', {
+        start: new Date(startTimestamp * 1000).toISOString(),
+        end: new Date(endTimestamp * 1000).toISOString()
+      });
 
       const logResult = await git.log([
         `--since=${startTimestamp}`,
@@ -211,11 +216,27 @@ export class GitService {
         '--author', currentUser,
       ]);
 
+      console.log('Raw commits found:', logResult.all.length);
+
+      // Additional date filtering to ensure commits are within range
+      const filteredCommits = logResult.all.filter(commit => {
+        const commitDate = new Date(commit.date);
+        const commitTimestamp = Math.floor(commitDate.getTime() / 1000);
+        return commitTimestamp >= startTimestamp && commitTimestamp <= endTimestamp;
+      });
+
+      console.log('Filtered commits:', {
+        before: logResult.all.length,
+        after: filteredCommits.length,
+        startDate: new Date(startTimestamp * 1000).toISOString(),
+        endDate: new Date(endTimestamp * 1000).toISOString()
+      });
+
       const { ticketNumber, branchTitle } = this.formatBranchName(currentBranch);
 
       // Get diff stats for each commit
       const commitsWithStats = await Promise.all(
-        logResult.all.map(async commit => {
+        filteredCommits.map(async commit => {
           const diffStats = await this.getDiffStats(commit.hash);
           return {
             hash: commit.hash,
