@@ -3,3 +3,4 @@ ai-harvest-timesheet/node_modules
 ai-harvest-timesheet/release
 .idea
 ai-harvest-timesheet/dist-electron/
+.specstory

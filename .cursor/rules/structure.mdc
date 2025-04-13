@@ -1,0 +1,124 @@
+---
+description: 
+globs: 
+---
+# Project Structure
+
+```
+.
+├── .cursor
+│   └── rules
+│       ├── agent.mdc
+│       ├── global-rules.mdc
+│       └── structure.mdc
+├── .cursorrules
+├── .github
+│   └── workflows
+│       └── build.yml
+├── .gitignore
+├── .scripts
+│   └── update_structure.sh
+├── @docs
+│   └── project_progress.md
+├── CHANGELOG.md
+├── LICENSE
+├── ai-harvest-timesheet
+│   ├── .env
+│   ├── .eslintrc.cjs
+│   ├── .gitignore
+│   ├── README.md
+│   ├── assets
+│   │   ├── icons
+│   │   │   ├── icon.icns
+│   │   │   └── icon.iconset
+│   │   │       ├── icon_128x128.png
+│   │   │       ├── icon_128x128@2x.png
+│   │   │       ├── icon_16x16.png
+│   │   │       ├── icon_16x16@2x.png
+│   │   │       ├── icon_256x256.png
+│   │   │       ├── icon_256x256@2x.png
+│   │   │       ├── icon_32x32.png
+│   │   │       ├── icon_32x32@2x.png
+│   │   │       ├── icon_512x512.png
+│   │   │       └── icon_512x512@2x.png
+│   │   └── tray-icons
+│   │       ├── tray-icon-backup.png
+│   │       └── tray-icon.png
+│   ├── build
+│   │   └── entitlements.mac.plist
+│   ├── electron
+│   │   ├── main.ts
+│   │   └── preload.ts
+│   ├── electron-builder.json5
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   ├── electron-vite.animate.svg
+│   │   ├── electron-vite.svg
+│   │   └── vite.svg
+│   ├── source_icon.png
+│   ├── src
+│   │   ├── App.tsx
+│   │   ├── components
+│   │   │   ├── harvest
+│   │   │   │   └── HarvestCredentialsDialog.tsx
+│   │   │   ├── layout
+│   │   │   │   └── MainLayout.tsx
+│   │   │   ├── notifications
+│   │   │   │   └── NotificationSettingsDialog.tsx
+│   │   │   ├── preferences
+│   │   │   │   ├── BranchParsingSettings.tsx
+│   │   │   │   ├── GlobalPreferencesDialog.tsx
+│   │   │   │   └── tabs
+│   │   │   │       ├── DistributionSettings.tsx
+│   │   │   │       ├── ExternalIssueSettings.tsx
+│   │   │   │       └── GeneralSettings.tsx
+│   │   │   ├── repository
+│   │   │   │   ├── RepositoryManager.tsx
+│   │   │   │   └── RepositorySettings.tsx
+│   │   │   └── timeEntry
+│   │   │       ├── DateRangeSelector.tsx
+│   │   │       ├── HourEditor.tsx
+│   │   │       ├── RefreshWarningDialog.tsx
+│   │   │       └── TimeEntryPreview.tsx
+│   │   ├── context
+│   │   │   ├── LoadingContext.tsx
+│   │   │   └── PreferencesContext.tsx
+│   │   ├── env.d.ts
+│   │   ├── example.ts
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   ├── services
+│   │   │   ├── branchParsingService.ts
+│   │   │   ├── distributionService.ts
+│   │   │   ├── gitService.ts
+│   │   │   ├── harvestApi.ts
+│   │   │   ├── preferencesService.ts
+│   │   │   ├── storageService.ts
+│   │   │   └── webhookService.ts
+│   │   ├── theme
+│   │   │   └── index.ts
+│   │   ├── theme.ts
+│   │   ├── types
+│   │   │   ├── errors.ts
+│   │   │   ├── index.ts
+│   │   │   └── preferences.ts
+│   │   └── utils
+│   │       └── timeUtils.ts
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── build
+│   └── entitlements.mac.plist
+├── docs
+│   ├── installation_guide.md
+│   ├── project_plan.md
+│   ├── project_progress.md
+│   ├── test.md
+│   └── test2.md
+├── readme.md
+└── scratchpad.md
+
+31 directories, 83 files
+```

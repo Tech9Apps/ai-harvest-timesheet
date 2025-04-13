@@ -1,5 +1,5 @@
 import simpleGit, { SimpleGit } from 'simple-git';
-import { startOfDay, endOfDay, format } from 'date-fns';
+import { startOfDay, endOfDay, format, parseISO } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
 import { CommitInfo, Repository, DiffStats } from '../types';
@@ -198,16 +198,17 @@ export class GitService {
         throw new Error('Could not determine current user');
       }
 
-      // Format dates for git log command using ISO format
-      const afterDate = format(since, 'yyyy-MM-dd');
-      const beforeDate = format(until, 'yyyy-MM-dd');
+      // Convert dates to Unix timestamps (seconds)
+      const startTimestamp = Math.floor(since.getTime() / 1000);
+      const endTimestamp = Math.floor(until.getTime() / 1000);
 
       const logResult = await git.log([
-        '--after', `${afterDate} 00:00:00`,
-        '--before', `${beforeDate} 23:59:59`,
-        currentBranch,  // Only get commits from current branch
-        '--no-merges',  // Exclude merge commits
-        '--author', currentUser,  // Only get commits from current user
+        `--since=${startTimestamp}`,
+        `--until=${endTimestamp}`,
+        '--date=iso-strict',
+        currentBranch,
+        '--no-merges',
+        '--author', currentUser,
       ]);
 
       const { ticketNumber, branchTitle } = this.formatBranchName(currentBranch);
@@ -221,7 +222,7 @@ export class GitService {
             date: commit.date,
             message: commit.message,
             branch: currentBranch,
-            ticket: ticketNumber,  // Include the ticket number
+            ticket: ticketNumber,
             formattedMessage: this.formatCommitMessage(ticketNumber, branchTitle, commit.message),
             diffStats
           };

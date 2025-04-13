@@ -3,7 +3,7 @@ import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { startOfDay, endOfDay } from 'date-fns';
+import { startOfDay, endOfDay, isAfter, isBefore, isEqual } from 'date-fns';
 
 interface DateRangeSelectorProps {
   startDate: Date;
@@ -30,9 +30,43 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
       onRangeTypeChange(newRangeType);
       if (newRangeType === 'today') {
         const today = new Date();
-        onDateRangeChange(startOfDay(today), endOfDay(today));
+        const newStartDate = startOfDay(today);
+        const newEndDate = endOfDay(today);
+        onDateRangeChange(newStartDate, newEndDate);
       }
     }
+  };
+
+  const handleStartDateChange = (newValue: Date | null) => {
+    if (!newValue) return;
+
+    const newStartDate = startOfDay(newValue);
+    let newEndDate = endDate;
+
+    // If the new start date is after the current end date
+    // or if they're the same day but end date isn't at end of day
+    if (isAfter(newStartDate, endDate) || 
+        (isEqual(newStartDate, startOfDay(endDate)) && endDate.getHours() !== 23)) {
+      newEndDate = endOfDay(newValue);
+    }
+
+    onDateRangeChange(newStartDate, newEndDate);
+  };
+
+  const handleEndDateChange = (newValue: Date | null) => {
+    if (!newValue) return;
+
+    const newEndDate = endOfDay(newValue);
+    let newStartDate = startDate;
+
+    // If the new end date is before the current start date
+    // or if they're the same day but start date isn't at start of day
+    if (isBefore(newEndDate, startDate) || 
+        (isEqual(endOfDay(startDate), newEndDate) && startDate.getHours() !== 0)) {
+      newStartDate = startOfDay(newValue);
+    }
+
+    onDateRangeChange(newStartDate, newEndDate);
   };
 
   return (
@@ -58,11 +92,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             <DatePicker
               label="Start Date"
               value={startDate}
-              onChange={(newValue) => {
-                if (newValue) {
-                  onDateRangeChange(startOfDay(newValue), endDate);
-                }
-              }}
+              onChange={handleStartDateChange}
               slotProps={{
                 textField: {
                   size: 'small',
@@ -73,11 +103,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             <DatePicker
               label="End Date"
               value={endDate}
-              onChange={(newValue) => {
-                if (newValue) {
-                  onDateRangeChange(startDate, endOfDay(newValue));
-                }
-              }}
+              onChange={handleEndDateChange}
               minDate={startDate}
               slotProps={{
                 textField: {
